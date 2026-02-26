@@ -1,10 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin - CODE STUDIO ke</title>
+  <title>Admin - CODESTUDIO.KENYA</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link
     href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap"
@@ -109,11 +109,11 @@
       border-right-color: rgba(0, 0, 0, 0.10);
     }
 
-    html.light .logo-name {
+    html.light .brand-cursor {
       color: #111;
     }
 
-    html.light .logo-name em {
+    html.light .brand-roll span {
       color: #aaa;
     }
 
@@ -521,28 +521,116 @@
     }
 
     .logo-mark {
-      width: 28px;
-      height: 28px;
-      background: var(--w);
+      width: 32px;
+      height: 32px;
+      background: rgba(255, 255, 255, .92);
+      border: 1.6px solid #000;
       border-radius: var(--r8);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
       flex-shrink: 0;
-      color: var(--black);
+      color: #000;
+    }
+
+    .logo-mark svg {
+      width: 18px;
+      height: 18px;
+      stroke: #000;
+      fill: none;
+      stroke-width: 1.8;
     }
 
     .logo-name {
-      font-size: 13px;
-      font-weight: 700;
-      letter-spacing: -.02em;
-      color: var(--w);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+      line-height: 1;
     }
 
-    .logo-name em {
-      font-style: normal;
+    .brand-cursor {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .08em;
+      color: var(--w);
+      white-space: nowrap;
+      overflow: hidden;
+      width: 17ch;
+      border-right: 1px solid var(--s3);
+      animation: brandTyping 2.8s steps(17, end) 1, brandCaret .9s step-end infinite;
+    }
+
+    .brand-roll {
+      position: relative;
+      height: 15px;
+      perspective: 360px;
+      transform-style: preserve-3d;
+      overflow: hidden;
+    }
+
+    .brand-roll span {
+      position: absolute;
+      inset: 0;
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
       color: var(--s5);
+      transform-origin: center center -10px;
+      backface-visibility: hidden;
+      opacity: 0;
+      animation: brandCube 10s infinite;
+    }
+
+    .brand-roll span:nth-child(1) {
+      animation-delay: 0s;
+    }
+
+    .brand-roll span:nth-child(2) {
+      animation-delay: 2s;
+    }
+
+    .brand-roll span:nth-child(3) {
+      animation-delay: 4s;
+    }
+
+    .brand-roll span:nth-child(4) {
+      animation-delay: 6s;
+    }
+
+    .brand-roll span:nth-child(5) {
+      animation-delay: 8s;
+    }
+
+    @keyframes brandTyping {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 17ch;
+      }
+    }
+
+    @keyframes brandCaret {
+      50% {
+        border-color: transparent;
+      }
+    }
+
+    @keyframes brandCube {
+      0%,
+      15% {
+        opacity: 1;
+        transform: rotateX(0deg) translateZ(10px);
+      }
+
+      20%,
+      100% {
+        opacity: 0;
+        transform: rotateX(-90deg) translateZ(10px);
+      }
     }
 
     .sb-user {
@@ -2049,12 +2137,23 @@
   <!-- """"""""""""""""""" SIDEBAR """"""""""""""""""" -->
   <aside class="sidebar">
     <div class="logo">
-      <div class="logo-mark">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+      <div class="logo-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 3 4 7.5v9L12 21l8-4.5v-9z" />
+          <path d="M12 21v-9" />
+          <path d="m4 7.5 8 4.5 8-4.5" />
         </svg>
       </div>
-      <div class="logo-name">CODE <em>STUDIO ke</em></div>
+      <div class="logo-name">
+        <span class="brand-cursor">CODESTUDIO.KENYA</span>
+        <span class="brand-roll" aria-hidden="true">
+          <span>Websites</span>
+          <span>Apps</span>
+          <span>CRM</span>
+          <span>ERP</span>
+          <span>Customs</span>
+        </span>
+      </div>
     </div>
 
     <div class="sb-user" onclick="openAdminProfileModal()">
@@ -3627,7 +3726,7 @@
           invoice_id: inv.id, project_id: projId || null,
           client_email: email, client_name: name, description: desc, amount, currency: 'KES',
           due_date: due || null, notes: notes || null,
-          sender_name: 'CODE STUDIO ke Admin', created_by: user?.id,
+          sender_name: 'CODESTUDIO.KENYA Admin', created_by: user?.id,
         }, jwt);
 
         if (result.error && !result.authorization_url) toast('Warning: ' + result.error);
@@ -5007,11 +5106,18 @@
           const myProfile = profiles.find(p => p.id === user.id);
           if (myProfile) {
             currentAdminProfile = { ...myProfile };
-            const fullName = `${myProfile.first_name || ''} ${myProfile.last_name || ''}`.trim() || myProfile.email || 'Administrator';
+            const authName = String(user?.user_metadata?.full_name || user?.user_metadata?.name || '').trim();
+            const fullName = `${myProfile.first_name || ''} ${myProfile.last_name || ''}`.trim() || authName || myProfile.email || 'Administrator';
             currentAdminName = fullName;
             const sbName = document.getElementById('sb-name');
             if (sbName) sbName.textContent = fullName;
-            const initials = ((myProfile.first_name?.[0] || '') + (myProfile.last_name?.[0] || '')).toUpperCase() || 'U';
+            const initialsSource = `${myProfile.first_name || ''} ${myProfile.last_name || ''}`.trim() || authName;
+            const initials = (initialsSource
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map(part => part[0] || '')
+              .join('') || 'U').toUpperCase();
             const sbInitials = document.getElementById('sb-initials');
             if (sbInitials) sbInitials.textContent = initials;
             const sbAv = document.getElementById('sb-av-img');

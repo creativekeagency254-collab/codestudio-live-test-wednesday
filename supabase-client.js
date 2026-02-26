@@ -170,6 +170,36 @@ function getAuthAvatarUrl(user) {
   return '';
 }
 
+function getAuthNameParts(user) {
+  if (!user) return { firstName: '', lastName: '', fullName: '' };
+  const meta = user.user_metadata || {};
+  let firstName = String(meta.first_name || meta.given_name || '').trim();
+  let lastName = String(meta.last_name || meta.family_name || '').trim();
+  let fullName = String(meta.full_name || meta.name || '').trim();
+
+  const identities = Array.isArray(user.identities) ? user.identities : [];
+  for (const identity of identities) {
+    const data = identity?.identity_data || {};
+    if (!firstName) firstName = String(data.first_name || data.given_name || '').trim();
+    if (!lastName) lastName = String(data.last_name || data.family_name || '').trim();
+    if (!fullName) fullName = String(data.full_name || data.name || '').trim();
+  }
+
+  if (!fullName) fullName = `${firstName} ${lastName}`.trim();
+  if ((!firstName || !lastName) && fullName) {
+    const parts = fullName.split(/\s+/).filter(Boolean);
+    if (!firstName) firstName = parts[0] || '';
+    if (!lastName) lastName = parts.length > 1 ? parts.slice(1).join(' ') : '';
+  }
+
+  return {
+    firstName,
+    lastName,
+    fullName: `${firstName} ${lastName}`.trim() || fullName
+  };
+}
+window.getAuthNameParts = getAuthNameParts;
+
 async function ensureUserProfile(session) {
   const dbClient = window.getDbClient ? window.getDbClient() : window.sbClient;
   if (!dbClient || !session?.user) return null;
@@ -177,6 +207,7 @@ async function ensureUserProfile(session) {
   const metaRole = resolveRoleFromUser(user);
   const forcedRole = forcedRoleFromEmail(user.email);
   const authAvatarUrl = getAuthAvatarUrl(user);
+  const authNames = getAuthNameParts(user);
 
   const { data: existing, error: selectError } = await dbClient
     .from('profiles')
@@ -201,12 +232,12 @@ async function ensureUserProfile(session) {
       updatePayload.role = metaRole;
       shouldUpdate = true;
     }
-    if (!existing.first_name && user.user_metadata?.first_name) {
-      updatePayload.first_name = user.user_metadata.first_name;
+    if (!existing.first_name && authNames.firstName) {
+      updatePayload.first_name = authNames.firstName;
       shouldUpdate = true;
     }
-    if (!existing.last_name && user.user_metadata?.last_name) {
-      updatePayload.last_name = user.user_metadata.last_name;
+    if (!existing.last_name && authNames.lastName) {
+      updatePayload.last_name = authNames.lastName;
       shouldUpdate = true;
     }
 
@@ -228,8 +259,8 @@ async function ensureUserProfile(session) {
   const payload = {
     id: user.id,
     email: user.email || '',
-    first_name: user.user_metadata?.first_name || '',
-    last_name: user.user_metadata?.last_name || '',
+    first_name: authNames.firstName || '',
+    last_name: authNames.lastName || '',
     avatar_url: authAvatarUrl || '',
     role
   };
@@ -244,7 +275,7 @@ async function ensureUserProfile(session) {
 
   const { data: reloaded, error: reloadError } = await dbClient
     .from('profiles')
-    .select('id, role, email, avatar_url')
+    .select('id, role, email, first_name, last_name, avatar_url')
     .eq('id', user.id)
     .maybeSingle();
 
@@ -475,6 +506,13 @@ if (window.sbClient && !window.__SC_AUTH_LISTENER_ATTACHED) {
     _L.debug(`Auth Event: ${event}`, { sessionSet: !!session });
 
     if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+      if (session?.user) {
+        try {
+          await ensureUserProfile(session);
+        } catch (syncErr) {
+          _L.debug('ensureUserProfile during auth event failed.', syncErr);
+        }
+      }
       const currentPage = currentPageName();
       if (isLandingPage(currentPage)) {
         await handleAuthRedirect(session);
