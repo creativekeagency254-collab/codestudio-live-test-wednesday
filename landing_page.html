@@ -3843,9 +3843,9 @@
       font-weight: 700;
       letter-spacing: .08em;
       text-transform: uppercase;
-      color: var(--accent);
+      color: #E8FFF2;
       background: rgba(0, 0, 0, .38);
-      border: 1px solid rgba(125, 200, 112, .25);
+      border: 1px solid rgba(125, 200, 112, .4);
       border-radius: 999px;
       padding: 4px 8px;
       backdrop-filter: blur(8px);
@@ -3932,9 +3932,35 @@
       align-items: center;
       gap: 8px;
       min-width: 0;
+      flex: 1;
+    }
+
+    .live-support-stack {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .live-support-line {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .live-support-fast {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #06311b;
+      background: #9AE6B4;
+      border: 1px solid #34d399;
+      border-radius: 999px;
+      padding: 2px 8px;
     }
 
     .live-support-actions {
@@ -3958,6 +3984,84 @@
     .live-support-icon:hover {
       border-color: var(--border3);
       background: var(--card3);
+    }
+
+    .live-support-wa-btn {
+      height: 32px;
+      border-radius: 9px;
+      border: 1px solid #34d399;
+      background: linear-gradient(145deg, #31d26a, #1db954);
+      color: #06210f;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 0 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    .live-support-wa-btn:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.04);
+    }
+
+    .dash-redirect-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2100;
+      background: rgba(0, 0, 0, .72);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+    }
+
+    .dash-redirect-overlay.open {
+      display: flex;
+    }
+
+    .dash-redirect-card {
+      width: min(430px, 94vw);
+      border-radius: 16px;
+      border: 1px solid rgba(125, 200, 112, .38);
+      background: #101410;
+      box-shadow: 0 24px 56px rgba(0, 0, 0, .45);
+      padding: 16px 16px 14px;
+      text-align: center;
+    }
+
+    .dash-redirect-cube {
+      width: 34px;
+      height: 34px;
+      margin: 0 auto 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(125, 200, 112, .55);
+      background: linear-gradient(145deg, rgba(154, 230, 180, .4), rgba(52, 211, 153, .18));
+      animation: dashCubeSpin 1.8s ease-in-out infinite;
+      transform-style: preserve-3d;
+    }
+
+    .dash-redirect-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #A7F3D0;
+      margin-bottom: 6px;
+    }
+
+    .dash-redirect-text {
+      font-size: 12px;
+      color: #D1D5DB;
+    }
+
+    @keyframes dashCubeSpin {
+      0% { transform: rotateX(0deg) rotateY(0deg); }
+      50% { transform: rotateX(180deg) rotateY(180deg); }
+      100% { transform: rotateX(360deg) rotateY(360deg); }
     }
 
     @keyframes supportLandingFloat {
@@ -6751,7 +6855,7 @@
   <!-- â•â•â•â• FAB â•â•â•â• -->
   <button class="fab" onclick="scrollToSec('#commissioners')" aria-label="Start a project">&#43;</button>
   <div class="live-support-wrap">
-    <div class="live-support-label">Live Support</div>
+    <div class="live-support-label">Message us</div>
     <button class="live-support-btn" onclick="openLandingSupport()" aria-label="Open live support">
       <svg viewBox="0 0 24 24">
         <path d="M21 15a2 2 0 0 1-2 2H8l-5 5V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
@@ -6768,14 +6872,18 @@
             <path d="M16.7 13.4c-.3-.2-1.7-.8-1.9-.9-.3-.1-.4-.2-.6.2-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1a6.8 6.8 0 0 1-3.4-3c-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.6-1.5-.8-2.1-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.1 3c.1.2 2 3.1 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.2-.3-.2-.6-.3z"></path>
             <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4.1A8 8 0 1 1 20 12z"></path>
           </svg>
-          <span>WhatsApp 0793832286</span>
+          <div class="live-support-stack">
+            <span class="live-support-line">Message us on WhatsApp: 0793832286</span>
+            <span class="live-support-fast">Answers within 1 hour</span>
+          </div>
         </div>
         <div class="live-support-actions">
-          <button class="live-support-icon" onclick="openLandingWhatsApp()" title="Open WhatsApp">
+          <button class="live-support-wa-btn" onclick="openLandingWhatsApp()" title="Open WhatsApp">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-              <path d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 1 1 21 11.5z"></path>
-              <polyline points="12 7 12 12 15 15"></polyline>
+              <path d="M16.7 13.4c-.3-.2-1.7-.8-1.9-.9-.3-.1-.4-.2-.6.2-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1a6.8 6.8 0 0 1-3.4-3c-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.6-1.5-.8-2.1-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.1 3c.1.2 2 3.1 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.2-.3-.2-.6-.3z"></path>
+              <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4.1A8 8 0 1 1 20 12z"></path>
             </svg>
+            <span>WhatsApp</span>
           </button>
         </div>
       </div>
@@ -6802,6 +6910,13 @@
           </button>
         </div>
       </div>
+    </div>
+  </div>
+  <div id="dash-redirect-overlay" class="dash-redirect-overlay" onclick="if(event.target===this)hideDashRedirectOverlay()">
+    <div class="dash-redirect-card">
+      <div class="dash-redirect-cube" aria-hidden="true"></div>
+      <div class="dash-redirect-title">Loading to dashboard...</div>
+      <div class="dash-redirect-text">(check your internet)</div>
     </div>
   </div>
 
@@ -7026,6 +7141,19 @@
 
     function closeLandingSupport() {
       const overlay = document.getElementById('landing-support-overlay');
+      if (overlay) overlay.classList.remove('open');
+    }
+
+    function showDashRedirectOverlay(message = '(check your internet)') {
+      const overlay = document.getElementById('dash-redirect-overlay');
+      if (!overlay) return;
+      const textEl = overlay.querySelector('.dash-redirect-text');
+      if (textEl) textEl.textContent = String(message || '(check your internet)');
+      overlay.classList.add('open');
+    }
+
+    function hideDashRedirectOverlay() {
+      const overlay = document.getElementById('dash-redirect-overlay');
       if (overlay) overlay.classList.remove('open');
     }
 
@@ -8191,6 +8319,7 @@
     function closeAuth() {
       document.getElementById('auth-overlay').classList.remove('open');
       document.body.classList.remove('auth-open');
+      hideDashRedirectOverlay();
     }
     function switchAuth(tab) {
       const isLogin = tab === 'login';
@@ -8210,6 +8339,7 @@
     }
     function authGoogle() {
       if (typeof initiateGoogleAuth === 'function') {
+        showDashRedirectOverlay('(check your internet)');
         initiateGoogleAuth();
       } else {
         showToast('Initialize Google Sign-In...');
@@ -8217,7 +8347,11 @@
     }
     async function redirectAfterAuth(authData) {
       const user = authData?.user || authData?.session?.user;
-      if (!user) return;
+      if (!user) {
+        hideDashRedirectOverlay();
+        return;
+      }
+      showDashRedirectOverlay('(check your internet)');
       if (typeof ensureWelcomeEmailForClient === 'function' && authData?.session) {
         try {
           await ensureWelcomeEmailForClient(authData.session);
@@ -8283,6 +8417,7 @@
           const { data, error } = await window.sbClient.auth.signInWithPassword({ email, password });
           if (error) {
             alert("Login failed: " + error.message);
+            hideDashRedirectOverlay();
             btn.disabled = false;
           } else {
             const ctx = getOnboardContext();
@@ -8322,6 +8457,7 @@
           });
           if (error) {
             alert("Signup failed: " + error.message);
+            hideDashRedirectOverlay();
             btn.disabled = false;
           } else {
             if (onboardCtx) persistOnboardContext(onboardCtx);
@@ -8330,6 +8466,7 @@
               await redirectAfterAuth(data);
             } else {
               showToast('Signup successful. Please confirm your email, then sign in.');
+              hideDashRedirectOverlay();
               btn.disabled = false;
             }
           }
