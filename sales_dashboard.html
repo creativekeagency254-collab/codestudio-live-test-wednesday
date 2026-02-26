@@ -103,7 +103,9 @@
       color: var(--text-2);
       display: flex;
       min-height: 100vh;
+      height: 100vh;
       overflow-x: hidden;
+      overflow-y: hidden;
       line-height: 1.5;
       transition: background .2s, color .2s;
     }
@@ -387,6 +389,7 @@
       flex-direction: column;
       overflow: hidden;
       min-width: 0;
+      min-height: 0;
     }
 
     .topbar {
@@ -459,10 +462,20 @@
       padding: 22px 26px;
       overflow-y: auto;
       flex: 1;
+      min-height: 0;
+      overscroll-behavior-y: contain;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-gutter: stable both-edges;
     }
 
     .page.active {
       display: block;
+    }
+
+    .msg-filter-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
     }
 
     .btn {
@@ -1379,6 +1392,23 @@
 
       .topbar {
         padding: 11px 16px !important;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: flex-start;
+      }
+
+      .tb-right {
+        width: 100%;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+      }
+
+      .g4,
+      .g3l,
+      .g2l,
+      .g2 {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
       }
 
       /* Collapse classes don't apply on mobile */
@@ -1449,6 +1479,22 @@
       .data-table {
         min-width: 580px;
       }
+
+      .msg-filter-row {
+        flex-direction: column;
+      }
+
+      #msg-role-filter {
+        width: 100% !important;
+      }
+
+      #chat-input-area {
+        flex-direction: column;
+      }
+
+      #chat-send-btn {
+        width: 100%;
+      }
     }
 
     /* -- Small phone <=500px -- */
@@ -1469,6 +1515,14 @@
       .page,
       .content {
         padding: 10px 10px !important;
+      }
+
+      .tb-right {
+        justify-content: stretch;
+      }
+
+      .tb-right .btn {
+        flex: 1 1 calc(50% - 6px);
       }
     }
   </style>
@@ -1962,7 +2016,7 @@
               <div class="card-title">Conversations</div>
               <button class="btn btn-g btn-xs" onclick="focusMessageComposer()">New Message</button>
             </div>
-            <div style="display:flex;gap:8px;margin-top:10px;">
+            <div class="msg-filter-row">
               <input id="msg-search" class="input" placeholder="Search name, role, project" oninput="window.loadThreads&&window.loadThreads()" style="flex:1;height:32px;">
               <select id="msg-role-filter" class="input" onchange="window.loadThreads&&window.loadThreads()" style="width:138px;height:32px;">
                 <option value="all">All</option>
