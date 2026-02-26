@@ -669,7 +669,7 @@
         )).join('');
       }
 
-      const landingUrl = new URL('landing_page.html', window.location.href);
+      const landingUrl = new URL('landing_page.html', `${window.location.origin}/`);
       landingUrl.searchParams.set('mode', 'onboard');
       landingUrl.searchParams.set('theme', theme);
       if (salesId) landingUrl.searchParams.set('sid', salesId);

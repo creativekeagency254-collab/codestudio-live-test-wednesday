@@ -2357,30 +2357,65 @@
         .from('projects')
         .select(`
           *,
-          client:profiles!projects_client_id_fkey(id, first_name, last_name, email),
-          commissioner:profiles!projects_commissioner_id_fkey(id, first_name, last_name, email),
+          client:profiles!projects_client_id_fkey(id, first_name, last_name, email, avatar_url, status, available_for_work),
+          commissioner:profiles!projects_commissioner_id_fkey(id, first_name, last_name, email, avatar_url, status, available_for_work),
           milestones(*)
         `)
         .eq('developer_id', currentUserId);
 
       const contactMap = new Map();
-      const rememberContact = (id, name, email = '', role = 'team', projectTitle = '', projectId = null) => {
-        if (!id || id === currentUserId || contactMap.has(id)) return;
+      const rememberContact = (
+        id,
+        name,
+        email = '',
+        role = 'team',
+        projectTitle = '',
+        projectId = null,
+        avatarUrl = '',
+        status = '',
+        availableForWork = null
+      ) => {
+        if (!id || id === currentUserId) return;
         const resolvedName = (name || '').trim() || email || 'User';
+        const existing = contactMap.get(id);
         contactMap.set(id, {
+          ...(existing || {}),
           id,
           name: resolvedName,
-          email: email || '',
+          email: email || existing?.email || '',
           role: (role || 'team').toLowerCase(),
-          project_title: projectTitle || '',
-          project_id: projectId || null
+          project_title: projectTitle || existing?.project_title || '',
+          project_id: projectId || existing?.project_id || null,
+          avatar_url: avatarUrl || existing?.avatar_url || '',
+          status: status || existing?.status || 'active',
+          available_for_work: typeof availableForWork === 'boolean' ? availableForWork : existing?.available_for_work
         });
       };
       (projects || []).forEach(p => {
         const clientName = p.client ? `${p.client.first_name || ''} ${p.client.last_name || ''}`.trim() : '';
-        rememberContact(p.client?.id || p.client_id, clientName, p.client?.email || '', 'client', p.title || '', p.id);
+        rememberContact(
+          p.client?.id || p.client_id,
+          clientName,
+          p.client?.email || '',
+          'client',
+          p.title || '',
+          p.id,
+          p.client?.avatar_url || '',
+          p.client?.status || '',
+          p.client?.available_for_work
+        );
         const commName = p.commissioner ? `${p.commissioner.first_name || ''} ${p.commissioner.last_name || ''}`.trim() : '';
-        rememberContact(p.commissioner?.id || p.commissioner_id, commName, p.commissioner?.email || '', 'commissioner', p.title || '', p.id);
+        rememberContact(
+          p.commissioner?.id || p.commissioner_id,
+          commName,
+          p.commissioner?.email || '',
+          'commissioner',
+          p.title || '',
+          p.id,
+          p.commissioner?.avatar_url || '',
+          p.commissioner?.status || '',
+          p.commissioner?.available_for_work
+        );
       });
 
       const statusMap = { active: 'b-g', 'in-progress': 'b-g', review: 'b-b', pending: 'b-a', completed: 'b-w' };
@@ -2480,14 +2515,24 @@
       // 2. Fetch open briefs (projects with status 'open' where developer not yet assigned)
       const { data: briefs, error: briefErr } = await supabase
         .from('projects')
-        .select(`*, commissioner:profiles!projects_commissioner_id_fkey(id, first_name, last_name, email), proposals(id)`)
+        .select(`*, commissioner:profiles!projects_commissioner_id_fkey(id, first_name, last_name, email, avatar_url, status, available_for_work), proposals(id)`)
         .eq('status', 'open')
         .is('developer_id', null);
 
       if (!briefErr && briefs) {
         briefs.forEach(b => {
           const commName = b.commissioner ? `${b.commissioner.first_name || ''} ${b.commissioner.last_name || ''}`.trim() : '';
-          rememberContact(b.commissioner?.id || b.commissioner_id, commName, b.commissioner?.email || '', 'commissioner', b.title || '', b.id);
+          rememberContact(
+            b.commissioner?.id || b.commissioner_id,
+            commName,
+            b.commissioner?.email || '',
+            'commissioner',
+            b.title || '',
+            b.id,
+            b.commissioner?.avatar_url || '',
+            b.commissioner?.status || '',
+            b.commissioner?.available_for_work
+          );
         });
 
         const briefsHtml = briefs.length ? briefs.map(b => {
@@ -2894,7 +2939,7 @@
       qs.set('github', cleanUrl(document.getElementById('f-github-url')?.value || ''));
       qs.set('linkedin', cleanUrl(document.getElementById('f-linkedin-url')?.value || ''));
       if (avatar) qs.set('avatar', avatar);
-      const url = `${new URL('developer_profile.html', window.location.href).toString()}?${qs.toString()}`;
+      const url = `${new URL('developer_profile.html', `${window.location.origin}/`).toString()}?${qs.toString()}`;
       const out = document.getElementById('dev-share-link');
       if (out) out.value = url;
       if (showNotice) toast('Developer profile link generated');
@@ -2959,6 +3004,31 @@
       return `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px;background:${palette.bg};color:${palette.fg};letter-spacing:.03em;">${safeRole(val)}</span>`;
     }
 
+    function availabilityMeta(meta = {}) {
+      const status = String(meta.status || '').toLowerCase();
+      if (status === 'inactive' || status === 'suspended' || status === 'offline') {
+        return { label: 'Offline', bg: 'var(--rbg)', fg: 'var(--red)' };
+      }
+      if (meta.available_for_work === false) {
+        return { label: 'Busy', bg: 'var(--abg)', fg: 'var(--amber)' };
+      }
+      return { label: 'Available', bg: 'var(--gbg)', fg: 'var(--green)' };
+    }
+
+    function availabilityPill(meta = {}) {
+      const av = availabilityMeta(meta);
+      return `<span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:999px;background:${av.bg};color:${av.fg};letter-spacing:.03em;">${av.label}</span>`;
+    }
+
+    function avatarNode(name = 'User', avatarUrl = '', size = 28, fontSize = 10) {
+      const initials = String(name || 'User').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'TM';
+      const safeUrl = String(avatarUrl || '').trim();
+      if (!safeUrl) {
+        return `<div class="av" style="width:${size}px;height:${size}px;font-size:${fontSize}px">${initials}</div>`;
+      }
+      return `<div class="av" style="position:relative;width:${size}px;height:${size}px;font-size:${fontSize}px;overflow:hidden"><img src="${safeUrl}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover" onerror="this.remove()">${initials}</div>`;
+    }
+
     function getContactMeta(id) {
       return (messageContacts || []).find(c => c.id === id) || null;
     }
@@ -2987,6 +3057,9 @@
         role: safeRole(c.role),
         projectTitle: c.project_title || '',
         email: c.email || '',
+        avatar_url: c.avatar_url || '',
+        status: c.status || '',
+        available_for_work: c.available_for_work,
         preview: c.email || '',
         unread: 0
       })));
@@ -2997,16 +3070,19 @@
         <div style="font-size:11px;color:var(--text-5);margin:0 0 8px 2px;text-transform:uppercase;letter-spacing:.08em;">Start Conversation</div>
         ${starters.map(c => {
           const safe = (c.name || 'User').replace(/'/g, '');
-          const initials = safe.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'TM';
           return `<div class="msg" style="cursor:pointer;padding:10px 12px;" onclick="startThreadWith('${c.id}','${safe}')">
             <div style="width:6px;flex-shrink:0"></div>
-            <div class="av" style="width:28px;height:28px;font-size:10px">${initials}</div>
+            ${avatarNode(safe, c.avatar_url, 28, 10)}
             <div style="flex:1;min-width:0">
               <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
                 <div style="font-size:12.5px;font-weight:700;color:var(--text-1)">${safe}</div>
                 ${rolePill(c.role)}
               </div>
-              <div style="font-size:11.5px;color:var(--text-5)">${c.projectTitle ? `Project: ${c.projectTitle}` : (c.email || 'Start a conversation')}</div>
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:2px 0 1px;">
+                ${availabilityPill(c)}
+                ${c.projectTitle ? `<span style="font-size:10px;color:var(--text-5)">Project: ${c.projectTitle}</span>` : ''}
+              </div>
+              <div style="font-size:11.5px;color:var(--text-5)">${c.email || 'Start a conversation'}</div>
             </div>
           </div>`;
         }).join('')}
@@ -3022,7 +3098,8 @@
       }
       const role = safeRole(meta.role);
       const project = meta.project_title || 'General';
-      el.innerHTML = `Role: <strong>${role}</strong> | Project: <strong>${project}</strong>${meta.email ? ` | ${meta.email}` : ''}`;
+      const availability = availabilityMeta(meta).label;
+      el.innerHTML = `Role: <strong>${role}</strong> | Availability: <strong>${availability}</strong> | Project: <strong>${project}</strong>${meta.email ? ` | ${meta.email}` : ''}`;
     }
 
     window.focusMessageComposer = function () {
@@ -3045,8 +3122,8 @@
       const { data: msgs } = await supabase
         .from('messages')
         .select(`id, content, created_at, is_read, sender_id, receiver_id,
-          sender:profiles!messages_sender_id_fkey(id, first_name, last_name, email, role),
-          receiver:profiles!messages_receiver_id_fkey(id, first_name, last_name, email, role)`)
+          sender:profiles!messages_sender_id_fkey(id, first_name, last_name, email, role, avatar_url, status, available_for_work),
+          receiver:profiles!messages_receiver_id_fkey(id, first_name, last_name, email, role, avatar_url, status, available_for_work)`)
         .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
         .order('created_at', { ascending: false });
 
@@ -3070,7 +3147,12 @@
             unread: 0,
             role: other.role || contactMeta?.role || 'team',
             project_title: contactMeta?.project_title || '',
-            email: other.email || contactMeta?.email || ''
+            email: other.email || contactMeta?.email || '',
+            avatar_url: other.avatar_url || contactMeta?.avatar_url || '',
+            status: other.status || contactMeta?.status || '',
+            available_for_work: typeof other.available_for_work === 'boolean'
+              ? other.available_for_work
+              : contactMeta?.available_for_work
           };
         }
         if (!m.is_read && sender.id !== currentUserId) threads[otherId].unread++;
@@ -3086,6 +3168,9 @@
           roleRaw: t.role,
           projectTitle: t.project_title || '',
           email: t.email || '',
+          avatar_url: t.avatar_url || '',
+          status: t.status || '',
+          available_for_work: t.available_for_work,
           preview: previewRaw.length > 56 ? `${previewRaw.slice(0, 56)}...` : (previewRaw || 'New message'),
           ago: timeSince(t.lastMsg.created_at),
           unread: t.unread
@@ -3095,10 +3180,9 @@
       threadRows = filterThreadRows(threadRows.map(r => ({ ...r, role: safeRole(r.roleRaw || r.role) })));
 
       document.getElementById('msg-threads').innerHTML = threadRows.length ? threadRows.map(t => {
-        const initials = t.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'TM';
         return `<div class="msg" style="cursor:pointer;padding:10px 14px;" onclick="openThread('${t.id}','${t.name.replace(/'/g, '')}')">
           ${t.unread > 0 ? '<div class="unread-dot"></div>' : '<div style="width:6px;flex-shrink:0"></div>'}
-          <div class="av" style="width:28px;height:28px;font-size:10px">${initials}</div>
+          ${avatarNode(t.name, t.avatar_url, 28, 10)}
           <div style="flex:1;min-width:0">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:2px">
               <span style="font-size:12.5px;font-weight:700;color:var(--text-1)">${t.name}</span>
@@ -3106,6 +3190,7 @@
             </div>
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;flex-wrap:wrap;">
               ${rolePill(t.roleRaw || t.role)}
+              ${availabilityPill(t)}
               ${t.projectTitle ? `<span style="font-size:10px;color:var(--text-5)">Project: ${t.projectTitle}</span>` : ''}
             </div>
             <div style="font-size:11.5px;color:var(--text-5)">${t.preview}</div>
