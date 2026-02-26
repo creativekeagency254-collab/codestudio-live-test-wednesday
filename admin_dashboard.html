@@ -2302,6 +2302,15 @@
       </div>
     </div><!-- /topbar -->
 
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 6px;">
+      <span style="font-size:11px;color:var(--s5);font-weight:600;letter-spacing:.06em;text-transform:uppercase;">Time Filter</span>
+      <input class="inp" type="date" id="global-date-from" onchange="applyGlobalTimeFilter()" style="width:auto;padding:7px 10px;font-size:12px;">
+      <input class="inp" type="date" id="global-date-to" onchange="applyGlobalTimeFilter()" style="width:auto;padding:7px 10px;font-size:12px;">
+      <button class="btn btn-w btn-xs" onclick="applyGlobalTimeFilter()">Apply</button>
+      <button class="btn btn-a btn-xs" onclick="clearGlobalTimeFilter()">Clear</button>
+      <span id="global-time-filter-label" style="font-size:11px;color:var(--s5);">Showing all time.</span>
+    </div>
+
     <div class="content">
 
         <!--  DASHBOARD  -->
@@ -3541,34 +3550,31 @@
         priority,
         expires_at: expiresAt
       };
-      const richRows = recipientIds.map(user_id => ({
-        user_id,
-        type: 'admin_broadcast',
-        title,
-        body,
-        payload,
-        channel: 'broadcast',
-        priority,
-        expires_at: expiresAt
-      }));
-      let sendErr = null;
-      {
-        const { error } = await sb.from('notifications').insert(richRows);
-        sendErr = error || null;
-      }
-      if (sendErr) {
-        const fallbackRows = recipientIds.map(user_id => ({
+      let sentCount = 0;
+      let firstError = null;
+      for (const user_id of recipientIds) {
+        const notifyInsert = await insertNotificationCompat(sb, {
           user_id,
           type: 'admin_broadcast',
           title,
           body,
-          payload
-        }));
-        const { error: fallbackErr } = await sb.from('notifications').insert(fallbackRows);
-        if (fallbackErr) {
-          toast(`Broadcast failed: ${fallbackErr.message || fallbackErr}`);
-          return;
+          content: body,
+          payload,
+          channel: 'broadcast',
+          priority,
+          expires_at: expiresAt,
+          is_read: false,
+          read_at: null
+        });
+        if (notifyInsert?.error) {
+          if (!firstError) firstError = notifyInsert.error;
+          continue;
         }
+        sentCount += 1;
+      }
+      if (!sentCount) {
+        toast(`Broadcast failed: ${firstError?.message || firstError || 'Unable to save notifications'}`);
+        return;
       }
       await sb.from('admin_broadcasts').insert({
         created_by: senderId,
@@ -3580,7 +3586,9 @@
       });
       document.getElementById('broadcast-title').value = '';
       document.getElementById('broadcast-body').value = '';
-      toast(`Broadcast sent to ${recipientIds.length} users.`);
+      toast(sentCount === recipientIds.length
+        ? `Broadcast sent to ${sentCount} users.`
+        : `Broadcast sent to ${sentCount}/${recipientIds.length} users.`);
     };
 
     function parseSettingNumber(value, fallback) {
@@ -3798,6 +3806,8 @@
         el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--s5);font-size:13px">Unable to load invoices and payouts</div>';
         return;
       }
+      const payoutRows = sortNewest(applyGlobalDateFilter(payoutReqs || []));
+      const invoiceRows = sortNewest(applyGlobalDateFilter(invs || []));
 
       const statusColor = {
         pending: 'var(--amber)',
@@ -3824,7 +3834,7 @@
         cancelled: 'var(--b3)'
       };
 
-      const invoiceHtml = (Array.isArray(invs) && invs.length) ? invs.map(inv => {
+      const invoiceHtml = (Array.isArray(invoiceRows) && invoiceRows.length) ? invoiceRows.map(inv => {
         const amt = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(inv.amount);
         const normalizedStatus = normalizeInvoiceStatus(inv.status);
         const sc = statusColor[normalizedStatus] || 'var(--s5)';
@@ -3864,9 +3874,9 @@
         </div>`;
       }).join('') : '<div style="padding:18px 14px;text-align:center;color:var(--s5);font-size:13px">No invoices found</div>';
 
-      const payoutHtml = Array.isArray(payoutReqs) && payoutReqs.length
+      const payoutHtml = Array.isArray(payoutRows) && payoutRows.length
         ? `<div style="border-bottom:1px solid var(--bd1);padding:10px 14px;font-size:11px;color:var(--s4);text-transform:uppercase;letter-spacing:.07em;">Sales Payout Requests</div>` +
-        payoutReqs.map(r => {
+        payoutRows.map(r => {
           const name = r.requester ? `${r.requester.first_name || ''} ${r.requester.last_name || ''}`.trim() || r.requester.email : 'Sales user';
           const badge = r.status === 'approved' || r.status === 'paid' ? 'b-g' : (r.status === 'rejected' ? 'b-r' : 'b-a');
           const canApprove = r.status === 'pending';
@@ -3909,9 +3919,9 @@
 
       const count = document.getElementById('nav-invoices-count');
       if (count) {
-        const pendingPayouts = Array.isArray(payoutReqs) ? payoutReqs.filter(r => r.status === 'pending' || r.status === 'approved').length : 0;
-        const pendingInvoices = Array.isArray(invs)
-          ? invs.filter(i => ['pending', 'sent', 'processing', 'overdue'].includes(normalizeInvoiceStatus(i.status))).length
+        const pendingPayouts = Array.isArray(payoutRows) ? payoutRows.filter(r => r.status === 'pending' || r.status === 'approved').length : 0;
+        const pendingInvoices = Array.isArray(invoiceRows)
+          ? invoiceRows.filter(i => ['pending', 'sent', 'processing', 'overdue'].includes(normalizeInvoiceStatus(i.status))).length
           : 0;
         count.textContent = String(pendingPayouts + pendingInvoices);
       }
@@ -4236,12 +4246,63 @@
         return bTs - aTs;
       });
     }
+    function getGlobalTimeRange() {
+      const fromRaw = String(document.getElementById('global-date-from')?.value || '').trim();
+      const toRaw = String(document.getElementById('global-date-to')?.value || '').trim();
+      const fromTs = fromRaw ? Date.parse(`${fromRaw}T00:00:00`) : null;
+      const toTs = toRaw ? Date.parse(`${toRaw}T23:59:59`) : null;
+      return {
+        fromRaw,
+        toRaw,
+        fromTs: Number.isFinite(fromTs) ? fromTs : null,
+        toTs: Number.isFinite(toTs) ? toTs : null
+      };
+    }
+    function withinGlobalTimeRange(itemTs, range) {
+      const ts = parseTs(itemTs);
+      if (!ts) return true;
+      if (range.fromTs && ts < range.fromTs) return false;
+      if (range.toTs && ts > range.toTs) return false;
+      return true;
+    }
+    function applyGlobalDateFilter(list) {
+      const range = getGlobalTimeRange();
+      if (!range.fromTs && !range.toTs) return Array.isArray(list) ? [...list] : [];
+      return (Array.isArray(list) ? list : []).filter(item => {
+        const itemTs = item?.createdAtMs || item?.createdAt || item?.created_at || item?.date || item?.time;
+        return withinGlobalTimeRange(itemTs, range);
+      });
+    }
+    function refreshGlobalTimeFilterLabel() {
+      const label = document.getElementById('global-time-filter-label');
+      if (!label) return;
+      const range = getGlobalTimeRange();
+      if (!range.fromRaw && !range.toRaw) {
+        label.textContent = 'Showing all time.';
+        return;
+      }
+      label.textContent = `Showing: ${range.fromRaw || 'start'} to ${range.toRaw || 'today'}`;
+    }
+    window.applyGlobalTimeFilter = function () {
+      refreshGlobalTimeFilterLabel();
+      renderAll();
+      loadInvoices();
+    };
+    window.clearGlobalTimeFilter = function () {
+      const from = document.getElementById('global-date-from');
+      const to = document.getElementById('global-date-to');
+      if (from) from.value = '';
+      if (to) to.value = '';
+      refreshGlobalTimeFilterLabel();
+      renderAll();
+      loadInvoices();
+    };
 
     //  Render Dashboard 
     function renderDashboard() {
-      const usersNewest = sortNewest(USERS);
-      const projectsNewest = sortNewest(PROJECTS);
-      const txNewest = sortNewest(TRANSACTIONS);
+      const usersNewest = sortNewest(applyGlobalDateFilter(USERS));
+      const projectsNewest = sortNewest(applyGlobalDateFilter(PROJECTS));
+      const txNewest = sortNewest(applyGlobalDateFilter(TRANSACTIONS));
 
       // Recent users
       const tbody = document.getElementById('dash-users-body');
@@ -4255,8 +4316,9 @@
     </tr>`).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--s5);padding:16px;">No users yet.</td></tr>';
 
       // Live feed
-      document.getElementById('live-feed').innerHTML = LIVE_FEED.length
-        ? LIVE_FEED.map(f => `<div class="act"><div class="act-dot ${f.dot}"></div><div><div class="act-txt">${f.text}</div><div class="act-time">${f.time}</div></div></div>`).join('')
+      const liveFeedFiltered = applyGlobalDateFilter(LIVE_FEED);
+      document.getElementById('live-feed').innerHTML = liveFeedFiltered.length
+        ? liveFeedFiltered.map(f => `<div class="act"><div class="act-dot ${f.dot}"></div><div><div class="act-txt">${f.text}</div><div class="act-time">${f.time}</div></div></div>`).join('')
         : '<div style="padding:14px;text-align:center;color:var(--s5);font-size:12px;">No recent platform activity.</div>';
 
       // Dashboard projects (top 4)
@@ -4282,7 +4344,7 @@
     function renderSupportInbox() {
       const host = document.getElementById('dash-support-inbox');
       if (!host) return;
-      const inboxNewest = sortNewest(SUPPORT_INBOX);
+      const inboxNewest = sortNewest(applyGlobalDateFilter(SUPPORT_INBOX));
       if (!inboxNewest.length) {
         host.innerHTML = '<div style="padding:12px;text-align:center;color:var(--s5);font-size:12px;">No support conversations yet.</div>';
         return;
@@ -4344,7 +4406,7 @@
       const q = document.getElementById('users-search').value.toLowerCase();
       const rf = document.getElementById('users-role-filter').value;
       const sf = document.getElementById('users-status-filter').value;
-      let filtered = sortNewest(USERS).filter(u =>
+      let filtered = sortNewest(applyGlobalDateFilter(USERS)).filter(u =>
         (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.includes(q)) &&
         (!rf || u.role === rf) &&
         (!sf || u.status === sf)
@@ -4371,7 +4433,7 @@
     function renderProjects() {
       const q = document.getElementById('projects-search').value.toLowerCase();
       const sf = document.getElementById('projects-status-filter').value;
-      let filtered = sortNewest(PROJECTS).filter(p =>
+      let filtered = sortNewest(applyGlobalDateFilter(PROJECTS)).filter(p =>
         (!q || p.title.toLowerCase().includes(q) || p.client.toLowerCase().includes(q) || p.dev.toLowerCase().includes(q)) &&
         (!sf || p.status === sf)
       );
@@ -4397,7 +4459,7 @@
     //  Render Vault 
     function renderVault() {
       const frozen = new Set(['p3', 'p5']);
-      const projectsNewest = sortNewest(PROJECTS);
+      const projectsNewest = sortNewest(applyGlobalDateFilter(PROJECTS));
       document.getElementById('vault-tbody').innerHTML = projectsNewest.length ? projectsNewest.map(p => {
         const paid = p.milestones.filter(m => m.status === 'paid').reduce((a, m) => a + m.amount, 0);
         const held = p.value - paid;
@@ -4426,7 +4488,7 @@
     //  Render Disputes 
     function renderDisputeCards(containerId, limit = 99) {
       const container = document.getElementById(containerId);
-      const open = sortNewest(DISPUTES).filter(d => d.status === 'open').slice(0, limit);
+      const open = sortNewest(applyGlobalDateFilter(DISPUTES)).filter(d => d.status === 'open').slice(0, limit);
       if (!open.length) { container.innerHTML = '<div class="empty">No open disputes</div>'; return; }
       container.innerHTML = open.map(d => `
     <div class="dp-card ${d.priority === 'high' ? 'dp-high' : ''}">
@@ -4451,7 +4513,7 @@
       const tf = document.getElementById('ledger-type-filter').value;
       const df = document.getElementById('ledger-date-from').value;
       const dt = document.getElementById('ledger-date-to').value;
-      let filtered = sortNewest(TRANSACTIONS).filter(t =>
+      let filtered = sortNewest(applyGlobalDateFilter(TRANSACTIONS)).filter(t =>
         (!q || t.id.toLowerCase().includes(q) || t.from.toLowerCase().includes(q) || t.to.toLowerCase().includes(q) || t.project.toLowerCase().includes(q)) &&
         (!tf || t.type === tf) &&
         (!df || t.date >= df) &&
@@ -4483,7 +4545,7 @@
     function renderAudit() {
       const q = document.getElementById('audit-search').value.toLowerCase();
       const tf = document.getElementById('audit-type-filter').value;
-      let filtered = sortNewest(AUDIT_LOGS).filter(a =>
+      let filtered = sortNewest(applyGlobalDateFilter(AUDIT_LOGS)).filter(a =>
         (!q || a.detail.toLowerCase().includes(q) || a.action.includes(q)) &&
         (!tf || a.action === tf)
       );
@@ -4500,13 +4562,14 @@
     }
 
     function updateAnalyticsSummary() {
-      const activeProjects = PROJECTS.filter(p => p.status === 'active' || p.status === 'in-progress').length;
-      const completedProjects = PROJECTS.filter(p => p.status === 'completed' || p.status === 'done').length;
-      const successRate = PROJECTS.length ? Math.round((completedProjects / PROJECTS.length) * 100) : 0;
-      const avgValue = PROJECTS.length
-        ? Math.round(PROJECTS.reduce((acc, p) => acc + Number(p.value || 0), 0) / PROJECTS.length)
+      const scopedProjects = applyGlobalDateFilter(PROJECTS);
+      const activeProjects = scopedProjects.filter(p => p.status === 'active' || p.status === 'in-progress').length;
+      const completedProjects = scopedProjects.filter(p => p.status === 'completed' || p.status === 'done').length;
+      const successRate = scopedProjects.length ? Math.round((completedProjects / scopedProjects.length) * 100) : 0;
+      const avgValue = scopedProjects.length
+        ? Math.round(scopedProjects.reduce((acc, p) => acc + Number(p.value || 0), 0) / scopedProjects.length)
         : 0;
-      const activeDevs = new Set(PROJECTS.filter(p => p.devId).map(p => p.devId)).size;
+      const activeDevs = new Set(scopedProjects.filter(p => p.devId).map(p => p.devId)).size;
       const avgDuration = 0;
 
       const rateEl = document.getElementById('analytics-success-rate');
@@ -4525,7 +4588,8 @@
       const tbody = document.getElementById('top-developers-body');
       if (!tbody) return;
       const totals = new Map();
-      TRANSACTIONS.forEach(t => {
+      const scopedTransactions = applyGlobalDateFilter(TRANSACTIONS);
+      scopedTransactions.forEach(t => {
         if (t.status !== 'paid') return;
         const match = USERS.find(u => u.name === t.to && u.role === 'developer');
         if (!match) return;
@@ -5279,19 +5343,75 @@
     }
 
     async function insertNotificationCompat(sb, payload) {
-      const primary = await sb.from('notifications').insert(payload);
-      if (!primary.error) return primary;
-      if (!(isMissingColumn(primary.error, 'body') || isMissingColumn(primary.error, 'payload'))) {
-        return primary;
-      }
-      const fallback = {
+      const base = {
         user_id: payload.user_id,
         type: payload.type || 'info',
         title: payload.title || 'Notification',
-        content: payload.body || payload.content || 'Platform update',
-        is_read: false
+        body: payload.body || payload.content || 'Platform update',
+        content: payload.content || payload.body || 'Platform update',
+        payload: payload.payload || null,
+        channel: payload.channel || null,
+        priority: payload.priority || null,
+        expires_at: payload.expires_at || null,
+        is_read: payload.is_read ?? false,
+        read_at: payload.read_at ?? null
       };
-      return sb.from('notifications').insert(fallback);
+
+      const keysToTryDrop = ['payload', 'channel', 'priority', 'expires_at', 'read_at', 'is_read', 'body', 'content'];
+      let draft = { ...base };
+
+      for (let attempt = 0; attempt < keysToTryDrop.length + 3; attempt += 1) {
+        const result = await sb.from('notifications').insert(draft);
+        if (!result.error) return result;
+
+        const errRaw = `${result.error.code || ''} ${result.error.message || ''} ${result.error.details || ''}`.toLowerCase();
+        if (errRaw.includes('null value') && errRaw.includes('"content"')) {
+          draft.content = draft.content || draft.body || 'Platform update';
+          continue;
+        }
+        if (errRaw.includes('null value') && errRaw.includes('"body"')) {
+          draft.body = draft.body || draft.content || 'Platform update';
+          continue;
+        }
+
+        const missingMatch = errRaw.match(/column\s+"?([a-z0-9_]+)"?\s+does not exist/i);
+        const missingCol = missingMatch?.[1];
+        if (missingCol && Object.prototype.hasOwnProperty.call(draft, missingCol)) {
+          const next = { ...draft };
+          delete next[missingCol];
+          draft = next;
+          continue;
+        }
+
+        if (isMissingColumn(result.error, 'body') && Object.prototype.hasOwnProperty.call(draft, 'body')) {
+          const next = { ...draft };
+          delete next.body;
+          draft = next;
+          continue;
+        }
+        if (isMissingColumn(result.error, 'content') && Object.prototype.hasOwnProperty.call(draft, 'content')) {
+          const next = { ...draft };
+          delete next.content;
+          draft = next;
+          continue;
+        }
+        if (isMissingColumn(result.error, 'payload') && Object.prototype.hasOwnProperty.call(draft, 'payload')) {
+          const next = { ...draft };
+          delete next.payload;
+          draft = next;
+          continue;
+        }
+
+        return result;
+      }
+
+      return sb.from('notifications').insert({
+        user_id: payload.user_id,
+        type: payload.type || 'info',
+        title: payload.title || 'Notification',
+        content: payload.content || payload.body || 'Platform update',
+        is_read: false
+      });
     }
 
     //  Theme 
@@ -5705,21 +5825,26 @@
       renderDisputeCards('disputes-full-list');
       renderLedger();
       renderAudit();
+      refreshGlobalTimeFilterLabel();
 
       // Update top-level dashboard counts if elements exist
-      if (document.getElementById('stat-users')) document.getElementById('stat-users').innerText = USERS.length;
-      if (document.getElementById('stat-projects')) document.getElementById('stat-projects').innerText = PROJECTS.length;
-      const openDisputes = DISPUTES.filter(d => d.status === 'open').length;
-      const totalEscrow = Math.round(PROJECTS.reduce((acc, p) => acc + Number(p.value || 0), 0));
-      const pending = TRANSACTIONS.filter(t => t.status === 'pending' || t.status === 'held').length;
+      const usersScoped = applyGlobalDateFilter(USERS);
+      const projectsScoped = applyGlobalDateFilter(PROJECTS);
+      const disputesScoped = applyGlobalDateFilter(DISPUTES);
+      const transactionsScoped = applyGlobalDateFilter(TRANSACTIONS);
+      if (document.getElementById('stat-users')) document.getElementById('stat-users').innerText = usersScoped.length;
+      if (document.getElementById('stat-projects')) document.getElementById('stat-projects').innerText = projectsScoped.length;
+      const openDisputes = disputesScoped.filter(d => d.status === 'open').length;
+      const totalEscrow = Math.round(projectsScoped.reduce((acc, p) => acc + Number(p.value || 0), 0));
+      const pending = transactionsScoped.filter(t => t.status === 'pending' || t.status === 'held').length;
       if (document.getElementById('stat-disputes')) document.getElementById('stat-disputes').innerText = openDisputes;
       if (document.getElementById('dispute-open-cnt')) document.getElementById('dispute-open-cnt').innerText = openDisputes;
       if (document.getElementById('nav-disputes-count')) document.getElementById('nav-disputes-count').innerText = openDisputes;
       if (document.getElementById('disputes-badge')) document.getElementById('disputes-badge').textContent = `${openDisputes} Active`;
       if (document.getElementById('stat-escrow')) document.getElementById('stat-escrow').innerText = `KSh ${totalEscrow.toLocaleString()}`;
       if (document.getElementById('stat-pending')) document.getElementById('stat-pending').innerText = pending;
-      if (document.getElementById('nav-users-count')) document.getElementById('nav-users-count').innerText = USERS.length;
-      if (document.getElementById('nav-proj-count')) document.getElementById('nav-proj-count').innerText = PROJECTS.length;
+      if (document.getElementById('nav-users-count')) document.getElementById('nav-users-count').innerText = usersScoped.length;
+      if (document.getElementById('nav-proj-count')) document.getElementById('nav-proj-count').innerText = projectsScoped.length;
       updateAnalyticsSummary();
       renderTopDevelopers();
     }
