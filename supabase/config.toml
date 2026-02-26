@@ -2,10 +2,11 @@ project_id = "smdbfaomeghoejqqkplv"
 
 [auth]
 enabled = true
-site_url = "https://liveteststudiocodemuchemi.netlify.app"
+site_url = "https://code-studio-kenya.vercel.app"
 additional_redirect_urls = [
-  "https://liveteststudiocodemuchemi.netlify.app",
-  "https://liveteststudiocodemuchemi.netlify.app/landing_page.html"
+  "https://code-studio-kenya.vercel.app",
+  "https://code-studio-kenya.vercel.app/",
+  "https://code-studio-kenya.vercel.app/landing_page.html"
 ]
 
 [auth.external.google]
