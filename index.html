@@ -3,10 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CODE STUDIO ke</title>
-  <meta http-equiv="refresh" content="0; url=landing_page.html">
+  <title>CODESTUDIO.KENYA</title>
   <script>
-    window.location.replace('landing_page.html');
+    (function redirectToLandingPreservingAuthFragment() {
+      const search = window.location.search || '';
+      const hash = window.location.hash || '';
+      const target = `landing_page.html${search}${hash}`;
+      window.location.replace(target);
+    })();
   </script>
 </head>
 <body>
