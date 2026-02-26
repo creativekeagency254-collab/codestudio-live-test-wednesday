@@ -1,0 +1,19 @@
+project_id = "smdbfaomeghoejqqkplv"
+
+[functions.send-invoice]
+verify_jwt = true
+
+[functions.initiate-topup]
+verify_jwt = false
+
+[functions.profile-write]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = true
+
+[functions.paystack-webhook]
+verify_jwt = false
+
+[functions.send_gmail]
+verify_jwt = false

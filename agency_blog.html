@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CODE STUDIO ke Blog | SEO + LLM Growth Playbook</title>
+  <meta name="description" content="A practical SEO and LLM visibility playbook for East Africa software agencies: site architecture, schema, technical SEO, content systems, and AI answer optimization.">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="CODE STUDIO ke Blog | SEO + LLM Growth Playbook">
+  <meta property="og:description" content="How CODE STUDIO ke structures technical content to rank in search and appear in AI answers.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://code-studio-ke-20260225192911.netlify.app/agency_blog.html">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070a0f;
+      --panel: #0f141e;
+      --card: #131b29;
+      --line: rgba(179, 191, 214, .2);
+      --text: #eaf0f8;
+      --muted: #a1acc0;
+      --accent: #34d399;
+      --accent2: #60a5fa;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, rgba(52, 211, 153, .18), transparent 58%),
+        radial-gradient(1000px 560px at 90% -20%, rgba(96, 165, 250, .17), transparent 57%),
+        var(--bg);
+    }
+    .wrap {
+      width: min(1120px, 100%);
+      margin: 0 auto;
+      padding: 28px 24px 56px;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .brand {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      letter-spacing: -.02em;
+    }
+    .home-link {
+      border: 1px solid var(--line);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 10px;
+      padding: 9px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      transition: .2s ease;
+    }
+    .home-link:hover {
+      border-color: rgba(255, 255, 255, .35);
+      transform: translateY(-1px);
+    }
+    .hero {
+      background: linear-gradient(140deg, rgba(15, 20, 30, .96), rgba(19, 27, 41, .92));
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 26px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0 0 12px;
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(28px, 4vw, 42px);
+      line-height: 1.1;
+      letter-spacing: -.02em;
+    }
+    .hero p {
+      margin: 0;
+      max-width: 900px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.65;
+    }
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: 1fr 1fr;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;
+      background: linear-gradient(180deg, rgba(19, 27, 41, .92), rgba(16, 22, 32, .92));
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-family: 'Syne', sans-serif;
+      letter-spacing: -.01em;
+    }
+    .card p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+    .card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+    .card li {
+      margin: 7px 0;
+      color: var(--text);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+    .span2 { grid-column: span 2; }
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .kpi {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px;
+      background: rgba(255, 255, 255, .02);
+    }
+    .kpi .v {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .kpi .l {
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .note {
+      margin-top: 18px;
+      border-left: 3px solid var(--accent2);
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--muted);
+      background: rgba(96, 165, 250, .08);
+      border-radius: 0 10px 10px 0;
+    }
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .span2 { grid-column: auto; }
+      .kpis { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "SEO + LLM Growth Playbook for East Africa Software Agencies",
+    "description": "How CODE STUDIO ke structures technical content, internal linking, schema, and answer-first writing to rank in search and appear in AI responses.",
+    "author": {"@type": "Organization", "name": "CODE STUDIO ke"},
+    "publisher": {"@type": "Organization", "name": "CODE STUDIO ke"},
+    "mainEntityOfPage": "https://code-studio-ke-20260225192911.netlify.app/agency_blog.html",
+    "datePublished": "2026-02-26",
+    "dateModified": "2026-02-26"
+  }
+  </script>
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <div class="brand">CODE STUDIO ke | Insights</div>
+      <a class="home-link" href="landing_page.html">Back to Home</a>
+    </div>
+
+    <section class="hero">
+      <h1>SEO + LLM Visibility Blueprint for Software Agencies</h1>
+      <p>
+        This page is the agency knowledge base for becoming top-ranked across traditional search and AI answer engines.
+        The model is simple: technical credibility, answer-structured content, transparent proof, and consistent domain authority.
+        Built for Kenya and East Africa B2B software demand.
+      </p>
+      <div class="kpis">
+        <div class="kpi"><div class="v">4-Layer</div><div class="l">Content Architecture</div></div>
+        <div class="kpi"><div class="v">100%</div><div class="l">Schema Coverage</div></div>
+        <div class="kpi"><div class="v">2x</div><div class="l">Entity Reinforcement</div></div>
+        <div class="kpi"><div class="v">Weekly</div><div class="l">Update Cadence</div></div>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>1. Search + LLM Architecture</h2>
+        <p>Design content in four layers so both search crawlers and LLM retrievers can parse expertise fast.</p>
+        <ul>
+          <li><strong>Commercial pages:</strong> service pages for intent-driven terms ("custom CRM developer Kenya").</li>
+          <li><strong>Solution pages:</strong> role-specific outcomes (sales team CRM, finance automation, support portals).</li>
+          <li><strong>Authority articles:</strong> implementation guides, cost models, timelines, QA standards.</li>
+          <li><strong>Proof pages:</strong> case studies, delivery snapshots, milestone outcomes, testimonials.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>2. Entity and Topical Depth</h2>
+        <p>Every page should reinforce core entities: agency, services, region, vertical, platform stack.</p>
+        <ul>
+          <li>Keep consistent naming: CODE STUDIO ke, Kenya, East Africa, milestones, escrow protection.</li>
+          <li>Use explicit role language: client, commissioner, developer, admin workflow.</li>
+          <li>Create clustered pages per service family and link them with contextual anchors.</li>
+          <li>Use FAQ blocks that answer real buyer objections in concise 2-4 sentence responses.</li>
+        </ul>
+      </article>
+
+      <article class="card span2">
+        <h2>3. Technical SEO That Actually Moves Rankings</h2>
+        <ul>
+          <li>Maintain canonical URLs, sitemap freshness, and clean crawl paths for every indexable route.</li>
+          <li>Use JSON-LD for Organization, Service, FAQPage, BreadcrumbList, and BlogPosting.</li>
+          <li>Standardize internal linking rules: each blog post links to 2 service pages + 1 case/proof page.</li>
+          <li>Limit template noise so main content is above-the-fold and semantically structured with H1-H3 hierarchy.</li>
+          <li>Track CWV and avoid oversized JS on conversion pages.</li>
+          <li>Use descriptive link text, not generic "click here."</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>4. LLM Answer Optimization</h2>
+        <p>LLMs reward clear, factual, well-structured content with strong source consistency.</p>
+        <ul>
+          <li>Answer-first intros: one short "direct answer" paragraph near the top of each article.</li>
+          <li>Use tables and bullet frameworks for scannability.</li>
+          <li>Add "What this means for your business" summary blocks.</li>
+          <li>Keep facts current and include specific numbers, dates, and scope boundaries.</li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>5. Publishing System</h2>
+        <ul>
+          <li><strong>Weekly:</strong> one technical guide + one buyer intent article.</li>
+          <li><strong>Monthly:</strong> one deep case study with measurable business outcomes.</li>
+          <li><strong>Quarterly:</strong> update top landing/service pages with new proof and refreshed schema.</li>
+          <li>Route all new content through QA: intent, uniqueness, links, metadata, schema, CTA clarity.</li>
+        </ul>
+      </article>
+
+      <article class="card span2">
+        <h2>6. Conversion Design for B2B Agency Traffic</h2>
+        <p>
+          Ranking without pipeline is wasted traffic. Build conversion points aligned to intent stage:
+          assessment call, pricing estimator, roadmap request, and project kickoff CTA.
+        </p>
+        <ul>
+          <li>BOFU pages: short forms, clear scope options, guaranteed response time.</li>
+          <li>MOFU pages: benchmark comparisons, architecture choices, timeline calculators.</li>
+          <li>TOFU pages: educational explainers that lead to consultative action.</li>
+          <li>Track assisted conversions, not only last-click attribution.</li>
+        </ul>
+      </article>
+    </section>
+
+    <div class="note">
+      This blog section is intentionally separate from the landing page to keep conversion flow clean while still building
+      SEO and LLM authority at scale.
+    </div>
+
+    <section class="grid" style="margin-top:16px;">
+      <article class="card" id="terms-of-service">
+        <h2>Terms of Service (Summary)</h2>
+        <p>
+          Project delivery is milestone-based. Scope, timelines, and payment stages are approved in writing before build starts.
+          Change requests are quoted before implementation. Platform misuse, fraud, and policy abuse may lead to account suspension.
+        </p>
+      </article>
+
+      <article class="card" id="privacy-policy">
+        <h2>Privacy Policy (Summary)</h2>
+        <p>
+          We process account, project, and payment metadata only for service delivery, fraud prevention, support, and legal compliance.
+          Sensitive keys are server-side only. Client and project data access is restricted by role-based controls.
+        </p>
+      </article>
+
+      <article class="card span2" id="careers">
+        <h2>Careers & Partner Opportunities</h2>
+        <p>
+          We onboard developers, commissioners, and technical collaborators across Kenya and East Africa.
+          If you have a strong delivery portfolio in web, mobile, cloud, AI, or integrations, use the onboarding links from the main site.
+        </p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
