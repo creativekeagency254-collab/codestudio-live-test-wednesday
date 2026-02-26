@@ -1,5 +1,5 @@
-# robots.txt — Studio Code
-# https://www.studiocode.co.ke
+# robots.txt - CODESTUDIO.KENYA
+# https://code-studio-kenya.vercel.app
 
 User-agent: *
 Allow: /
@@ -16,4 +16,4 @@ Disallow: /private/
 Crawl-delay: 10
 
 # Sitemap location
-Sitemap: https://www.studiocode.co.ke/sitemap.xml
+Sitemap: https://code-studio-kenya.vercel.app/sitemap.xml
