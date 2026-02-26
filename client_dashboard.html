@@ -3468,12 +3468,17 @@
         <span>Payment status</span>
         <span class="badge b-a" id="project-detail-payment-status">pending</span>
       </div>
+      <div id="project-detail-verify-box" class="project-detail-status">
+        <span>Project verification</span>
+        <span class="badge b-a" id="project-detail-verify-status">pending</span>
+      </div>
       <div id="project-detail-grid" class="detail-list"></div>
       <div id="project-detail-desc" style="margin-top:6px;padding:10px;border:1px solid var(--border-1);border-radius:var(--r10);background:var(--bg-inset);font-size:12px;color:var(--text-3);line-height:1.55;"></div>
       <div class="project-detail-actions">
         <button class="btn btn-w" type="button" onclick="payProjectNow()">Pay Now</button>
         <button class="btn btn-live" type="button" onclick="sendProjectInvoiceEmail()">Send Invoice Email</button>
         <button class="btn btn-g" type="button" onclick="verifyProjectPaymentStatus()">Verify Payment</button>
+        <button class="btn btn-g" type="button" onclick="markProjectAsVerified()">Mark Project Verified</button>
       </div>
       <div class="action-row" style="justify-content:flex-end;margin-top:10px;">
         <button class="btn btn-g" type="button" onclick="closeClientProjectDetailsModal()">Close</button>
@@ -3966,6 +3971,9 @@
         activeCount = projects.filter(p => ['in-progress', 'in_progress', 'active', 'open', 'pending'].includes(String(p.status || '').toLowerCase())).length;
         projHtml = projects.slice(0, 3).map(p => {
           const devName = p.developer ? `${p.developer.first_name || ''} ${p.developer.last_name || ''}`.trim() : 'Unassigned';
+          const verifiedLabel = p.client_verified
+            ? ' <span style="color:var(--green);font-weight:700;">Verified Project</span>'
+            : '';
           return `
               <div class="proj-row project-row-action" style="padding: 12px; border-bottom: 1px solid var(--border-1);" onclick="openClientProjectDetails('${p.id}')">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
@@ -3973,7 +3981,7 @@
                   <div style="font-family:'DM Mono', monospace; font-size:12px; color:var(--text-2);">${Number(p.total_value ?? p.budget ?? 0).toLocaleString()} KES</div>
                 </div>
                 <div style="font-size:11px; color:var(--text-4);">
-                  Developer: ${devName}  Status: <span style="text-transform:capitalize;">${p.status}</span>
+                  Developer: ${devName}  Status: <span style="text-transform:capitalize;">${p.status}</span>${verifiedLabel}
                 </div>
               </div>`;
         }).join('');
@@ -4024,6 +4032,9 @@
           tbBody.innerHTML = projects.map(p => {
             const devName = p.developer ? `${p.developer.first_name || ''} ${p.developer.last_name || ''}`.trim() : 'Unassigned';
             const statusClass = (p.status === 'active' || p.status === 'in-progress') ? 'b-g' : (p.status === 'review' ? 'b-b' : 'b-w');
+            const verifiedLine = p.client_verified
+              ? '<div style="font-size:10px;color:var(--green);font-weight:700;margin-top:4px;">Verified Project</div>'
+              : '';
             return `
                 <tr class="project-row-action" onclick="openClientProjectDetails('${p.id}')">
                   <td>
@@ -4036,7 +4047,7 @@
                   <td>
                     <div class="pbg" style="width:60px;"><div class="pf pf-g" style="width:${p.progress || 0}%"></div></div>
                   </td>
-                  <td><span class="badge ${statusClass}">${p.status || 'open'}</span></td>
+                  <td><span class="badge ${statusClass}">${p.status || 'open'}</span>${verifiedLine}</td>
                 </tr>`;
           }).join('');
         } else {
@@ -5440,6 +5451,7 @@
       const detailGrid = document.getElementById('project-detail-grid');
       const detailDesc = document.getElementById('project-detail-desc');
       const paymentStatus = document.getElementById('project-detail-payment-status');
+      const verifyStatus = document.getElementById('project-detail-verify-status');
       if (!project || !detailGrid || !detailDesc) return;
 
       const { commissioner, developer } = projectPeopleLabel(project);
@@ -5447,6 +5459,7 @@
       const invoice = latestProjectInvoice(project.id);
       const invStatus = String(invoice?.status || 'pending').toLowerCase();
       const statusClass = invStatus === 'paid' ? 'b-g' : (invStatus === 'failed' ? 'b-r' : 'b-a');
+      const isVerified = Boolean(project.client_verified);
       const timeline = String(project.timeline || project.due_date || '').trim() || 'Not provided';
 
       if (detailTitle) detailTitle.textContent = project.title || 'Project Details';
@@ -5455,12 +5468,17 @@
         paymentStatus.className = `badge ${statusClass}`;
         paymentStatus.textContent = humanizeStatus(invStatus);
       }
+      if (verifyStatus) {
+        verifyStatus.className = `badge ${isVerified ? 'b-g' : 'b-a'}`;
+        verifyStatus.textContent = isVerified ? 'verified' : 'pending';
+      }
 
       detailGrid.innerHTML = `
         <div class="detail-item"><div class="detail-k">Project ID</div><div class="detail-v">${String(project.id || '').slice(0, 12)}</div></div>
         <div class="detail-item"><div class="detail-k">Budget</div><div class="detail-v">KSh ${Math.round(totalValue).toLocaleString()}</div></div>
         <div class="detail-item"><div class="detail-k">Timeline</div><div class="detail-v">${timeline}</div></div>
         <div class="detail-item"><div class="detail-k">Current Status</div><div class="detail-v">${humanizeStatus(project.status)}</div></div>
+        <div class="detail-item"><div class="detail-k">Client Verification</div><div class="detail-v">${isVerified ? 'Verified Project' : 'Pending verification'}</div></div>
         <div class="detail-item"><div class="detail-k">Commissioner</div><div class="detail-v">${commissioner}</div></div>
         <div class="detail-item"><div class="detail-k">Developer</div><div class="detail-v">${developer}</div></div>
       `;
@@ -5611,6 +5629,77 @@
       }
     };
 
+    async function setProjectVerifiedState(projectId, verified = true) {
+      if (!projectId || !window.sbClient || !CURRENT_USER?.id) return { ok: false, error: 'Project not found.' };
+      const sb = window.getDbClient ? window.getDbClient() : window.sbClient;
+      const nowIso = new Date().toISOString();
+      const updatePayload = {
+        client_verified: Boolean(verified),
+        client_verified_at: verified ? nowIso : null,
+        client_verified_by: verified ? CURRENT_USER.id : null,
+        updated_at: nowIso
+      };
+
+      let { data: updated, error } = await sb
+        .from('projects')
+        .update(updatePayload)
+        .eq('id', projectId)
+        .eq('client_id', CURRENT_USER.id)
+        .select('*')
+        .maybeSingle();
+
+      if (error) {
+        const raw = String(error?.message || '').toLowerCase();
+        if (raw.includes('client_verified') || raw.includes('schema cache') || raw.includes('column')) {
+          return { ok: false, error: 'Project verification fields are missing in database. Run latest Supabase migration.' };
+        }
+        return { ok: false, error: clientErrorMessage(error, 'Could not update project verification.') };
+      }
+
+      if (!updated) {
+        const { data: fetchUpdated, error: fetchErr } = await sb
+          .from('projects')
+          .select('*')
+          .eq('id', projectId)
+          .eq('client_id', CURRENT_USER.id)
+          .maybeSingle();
+        if (fetchErr) return { ok: false, error: clientErrorMessage(fetchErr, 'Could not refresh project verification state.') };
+        updated = fetchUpdated || null;
+      }
+
+      if (updated) {
+        CLIENT_PROJECTS_CACHE = (CLIENT_PROJECTS_CACHE || []).map(p => p.id === projectId ? { ...p, ...updated } : p);
+      }
+      return { ok: true, project: updated };
+    }
+
+    window.markProjectAsVerified = async function () {
+      if (!ACTIVE_PROJECT_DETAIL_ID) return;
+      const project = findProjectById(ACTIVE_PROJECT_DETAIL_ID);
+      if (!project) {
+        toast('Project was not found. Refreshing...');
+        await loadData();
+        return;
+      }
+
+      const invoice = latestProjectInvoice(ACTIVE_PROJECT_DETAIL_ID);
+      const paid = String(invoice?.status || '').toLowerCase() === 'paid';
+      if (!paid) {
+        toast('Verify payment first before marking project as verified.');
+        return;
+      }
+
+      const result = await setProjectVerifiedState(ACTIVE_PROJECT_DETAIL_ID, true);
+      if (!result.ok) {
+        toast(result.error || 'Could not mark project as verified.');
+        return;
+      }
+
+      toast('Project marked as verified.');
+      if (result.project) renderProjectDetailModal(result.project);
+      await loadData();
+    };
+
     window.verifyProjectPaymentStatus = async function () {
       if (!ACTIVE_PROJECT_DETAIL_ID || !window.sbClient) return;
       const invoice = latestProjectInvoice(ACTIVE_PROJECT_DETAIL_ID);
@@ -5626,7 +5715,12 @@
       }
       CLIENT_INVOICES_CACHE = [data, ...(CLIENT_INVOICES_CACHE || []).filter(inv => inv.id !== data.id)];
       if (String(data.status || '').toLowerCase() === 'paid') {
-        toast('Payment confirmed. Project funding is successful and workflow can continue.');
+        const verifyResult = await setProjectVerifiedState(ACTIVE_PROJECT_DETAIL_ID, true);
+        if (!verifyResult.ok) {
+          toast(`Payment confirmed, but project verification failed: ${verifyResult.error}`);
+        } else {
+          toast('Payment confirmed. Project marked as verified and workflow can continue.');
+        }
       } else {
         toast(`Current payment status: ${humanizeStatus(data.status || 'pending')}`);
       }
