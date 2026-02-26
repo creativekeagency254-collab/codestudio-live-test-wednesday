@@ -192,9 +192,9 @@
     .logo-name {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
+      align-items: flex-start;
+      justify-content: flex-start;
+      gap: 6px;
       padding-top: 1px;
       min-width: 0;
       line-height: 1;
@@ -209,18 +209,27 @@
       overflow: hidden;
       width: 17ch;
       border-right: 1px solid var(--text-3);
-      animation: brandTypingLoop 2s steps(17, end) infinite, brandCaret .9s step-end infinite;
+      display: inline-block;
+      vertical-align: top;
+      animation: brandCaret .9s step-end infinite;
+    }
+
+    .brand-cursor-text {
+      display: inline-block;
+      overflow: hidden;
+      width: 17ch;
+      animation: brandTypingLoop 6s steps(17, end) infinite;
     }
 
     .brand-roll {
       position: relative;
-      height: 16px;
+      height: 14px;
       perspective: 360px;
       transform-style: preserve-3d;
       overflow: hidden;
-      margin-top: 1px;
-      width: 100%;
-      text-align: center;
+      margin-top: 2px;
+      width: 17ch;
+      text-align: left;
     }
 
     .brand-roll span {
@@ -234,7 +243,7 @@
       transform-origin: center center -10px;
       backface-visibility: hidden;
       opacity: 0;
-      animation: brandCube 10s infinite;
+      animation: brandCubePause 12.5s infinite;
     }
 
     .brand-roll span:nth-child(1) {
@@ -242,48 +251,53 @@
     }
 
     .brand-roll span:nth-child(2) {
-      animation-delay: 2s;
+      animation-delay: 2.5s;
     }
 
     .brand-roll span:nth-child(3) {
-      animation-delay: 4s;
+      animation-delay: 5s;
     }
 
     .brand-roll span:nth-child(4) {
-      animation-delay: 6s;
+      animation-delay: 7.5s;
     }
 
     .brand-roll span:nth-child(5) {
-      animation-delay: 8s;
+      animation-delay: 10s;
     }
 
     @keyframes brandTypingLoop {
-      from {
+      0% {
         width: 0;
       }
 
-      to {
+      28%,
+      88% {
         width: 17ch;
+      }
+
+      100% {
+        width: 0;
+      }
+    }
+
+    @keyframes brandCubePause {
+      0%,
+      60% {
+        opacity: 1;
+        transform: rotateX(0deg) translateZ(10px);
+      }
+
+      84%,
+      100% {
+        opacity: 0;
+        transform: rotateX(-90deg) translateZ(10px);
       }
     }
 
     @keyframes brandCaret {
       50% {
         border-color: transparent;
-      }
-    }
-
-    @keyframes brandCube {
-      0%,
-      15% {
-        opacity: 1;
-        transform: rotateX(0deg) translateZ(10px);
-      }
-
-      20%,
-      100% {
-        opacity: 0;
-        transform: rotateX(-90deg) translateZ(10px);
       }
     }
 
@@ -2826,7 +2840,7 @@
         </svg>
       </div>
       <div class="logo-name">
-        <span class="brand-cursor">CODESTUDIO.KENYA</span>
+        <span class="brand-cursor"><span class="brand-cursor-text">CODESTUDIO.KENYA</span></span>
         <span class="brand-roll" aria-hidden="true">
           <span>Websites</span>
           <span>Apps</span>
@@ -3791,8 +3805,10 @@
       } catch (dashboardErr) {
         if (window._L) _L.error('Client dashboard bootstrap failed:', dashboardErr);
         setDbStatus('error', 'Some data failed to load. Check migrations and policies.');
+        ensureClientDashboardSectionsVisible();
       } finally {
         setClientDashboardLoadingState(false);
+        ensureClientDashboardSectionsVisible();
         if (window.hideLoader) hideLoader();
       }
     }
@@ -4063,6 +4079,7 @@
         const activeProject = findProjectById(ACTIVE_PROJECT_DETAIL_ID);
         if (activeProject) renderProjectDetailModal(activeProject);
       }
+      ensureClientDashboardSectionsVisible();
       setClientDashboardLoadingState(false);
     }
 
@@ -5997,6 +6014,37 @@
       const activityNote = document.getElementById('escrow-activity-note');
       if (activityNote) activityNote.textContent = 'Loading escrow activity...';
       setClientChatIdle('Click a message to open it');
+      ensureClientDashboardSectionsVisible();
+    }
+
+    function ensureClientDashboardSectionsVisible() {
+      const dashProjects = document.getElementById('dash-projects');
+      if (dashProjects && !dashProjects.textContent.trim()) {
+        dashProjects.innerHTML = '<div class="loading-text" style="padding:14px;text-align:center;color:var(--text-5);">No projects yet. New projects will appear here.</div>';
+      }
+
+      const dashMilestones = document.getElementById('dash-milestones');
+      if (dashMilestones && !dashMilestones.textContent.trim()) {
+        dashMilestones.innerHTML = '<div class="loading-text" style="padding:20px; text-align:center; color:var(--text-5);">No milestones yet. Milestone activity will appear here.</div>';
+      }
+
+      const dashMessages = document.getElementById('dash-messages');
+      if (dashMessages && !dashMessages.textContent.trim()) {
+        dashMessages.innerHTML = '<div class="loading-text" style="padding:16px;text-align:center;color:var(--text-5);">No messages yet. Conversations will appear here.</div>';
+      }
+
+      const escrowNote = document.getElementById('escrow-activity-note');
+      if (escrowNote && !escrowNote.textContent.trim()) {
+        escrowNote.textContent = 'No escrow activity yet.';
+      }
+
+      const requiredStats = ['s-escrow', 's-proj', 's-ms', 's-msg'];
+      requiredStats.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el && !el.textContent.trim()) {
+          el.textContent = id === 's-ms' ? '0/0' : (id === 's-escrow' ? 'KSh 0' : '0');
+        }
+      });
     }
 
     // Initialize

@@ -189,6 +189,26 @@
       gap: 6px;
     }
 
+    .topic-group {
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      background: rgba(15, 23, 42, 0.28);
+      padding: 8px;
+      display: grid;
+      gap: 6px;
+    }
+
+    .topic-group-title {
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #86efac;
+      padding: 4px 4px 2px;
+      border-bottom: 1px dashed rgba(148, 163, 184, 0.24);
+      margin-bottom: 2px;
+    }
+
     .topic-item {
       border: 1px solid rgba(148, 163, 184, 0.28);
       background: rgba(15, 23, 42, 0.46);
@@ -586,12 +606,30 @@
     let visibleTopics = [...topics];
 
     function renderTopicList() {
-      topicListEl.innerHTML = visibleTopics.map((topic) => {
-        const activeClass = topic.id === activeTopicId ? 'active' : '';
-        return `<button class="topic-item ${activeClass}" data-topic-id="${topic.id}">
-          <span>${topic.id}. ${escapeHtml(topic.title)}</span>
-          <span class="topic-meta">${escapeHtml(topic.city)} | ${escapeHtml(topic.angle)}</span>
-        </button>`;
+      if (!visibleTopics.length) {
+        topicListEl.innerHTML = '<div class="loading-text" style="padding:10px;color:#94a3b8;">No topics matched your search.</div>';
+        return;
+      }
+
+      const groups = new Map();
+      visibleTopics.forEach((topic) => {
+        if (!groups.has(topic.service)) groups.set(topic.service, []);
+        groups.get(topic.service).push(topic);
+      });
+
+      topicListEl.innerHTML = Array.from(groups.entries()).map(([service, groupTopics]) => {
+        const buttons = groupTopics.map((topic) => {
+          const activeClass = topic.id === activeTopicId ? 'active' : '';
+          return `<button class="topic-item ${activeClass}" data-topic-id="${topic.id}">
+            <span>${topic.id}. ${escapeHtml(topic.angle)}</span>
+            <span class="topic-meta">${escapeHtml(topic.city)} | ${escapeHtml(topic.slug)}</span>
+          </button>`;
+        }).join('');
+
+        return `<section class="topic-group">
+          <div class="topic-group-title">${escapeHtml(service)}</div>
+          ${buttons}
+        </section>`;
       }).join('');
     }
 
