@@ -2946,9 +2946,26 @@
       return url;
     };
 
+    function normalizeShareLinkToCurrentOrigin(rawLink, fallbackPage = 'developer_profile.html') {
+      const raw = String(rawLink || '').trim();
+      if (!raw) return '';
+      try {
+        const parsed = new URL(raw, `${window.location.origin}/`);
+        const host = String(parsed.hostname || '').toLowerCase();
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost');
+        if (!isLocalHost) return parsed.toString();
+        const relative = `${parsed.pathname || `/${fallbackPage}`}${parsed.search || ''}${parsed.hash || ''}`;
+        return new URL(relative, `${window.location.origin}/`).toString();
+      } catch (_) {
+        return new URL(fallbackPage, `${window.location.origin}/`).toString();
+      }
+    }
+
     window.copyDeveloperProfileLink = async function () {
       const out = document.getElementById('dev-share-link');
-      const link = (out?.value || '').trim() || window.generateDeveloperProfileLink(false);
+      const rawLink = (out?.value || '').trim() || window.generateDeveloperProfileLink(false);
+      const link = normalizeShareLinkToCurrentOrigin(rawLink, 'developer_profile.html');
+      if (out && link) out.value = link;
       if (!link) {
         toast('Generate profile link first');
         return;
@@ -2964,7 +2981,9 @@
 
     window.previewDeveloperProfileLink = function () {
       const out = document.getElementById('dev-share-link');
-      const link = (out?.value || '').trim() || window.generateDeveloperProfileLink(false);
+      const rawLink = (out?.value || '').trim() || window.generateDeveloperProfileLink(false);
+      const link = normalizeShareLinkToCurrentOrigin(rawLink, 'developer_profile.html');
+      if (out && link) out.value = link;
       if (!link) {
         toast('Generate profile link first');
         return;

@@ -101,17 +101,32 @@ function currentPageName() {
   return pathLeaf.split('?')[0].split('#')[0];
 }
 
+function appUrl(path = '') {
+  const safePath = String(path || '').replace(/^\/+/, '');
+  return new URL(safePath, `${window.location.origin}/`).toString();
+}
+
+function pageNameFromUrlish(urlOrPath) {
+  try {
+    const target = new URL(String(urlOrPath || ''), `${window.location.origin}/`);
+    const leaf = target.pathname.split('/').pop() || '';
+    return leaf.split('?')[0].split('#')[0];
+  } catch (_) {
+    return currentPageName();
+  }
+}
+
 function isLandingPage(page = currentPageName()) {
   return LANDING_PAGES.has(page);
 }
 
 function dashboardForRole(role) {
   switch (role) {
-    case 'admin': return 'admin_dashboard.html';
-    case 'commissioner': return 'sales_dashboard.html';
-    case 'developer': return 'developer_dashboard.html';
-    case 'client':
-    default: return 'client_dashboard.html';
+    case 'admin': return appUrl('admin_dashboard.html');
+    case 'commissioner': return appUrl('sales_dashboard.html');
+    case 'developer': return appUrl('developer_dashboard.html');
+    case 'client': return appUrl('client_dashboard.html');
+    default: return appUrl('client_dashboard.html');
   }
 }
 
@@ -286,7 +301,7 @@ async function resolveRoleFromDatabase(session) {
 async function getDashboardForRole(session, options = {}) {
   const unresolvedFallback = Object.prototype.hasOwnProperty.call(options, 'unresolvedFallback')
     ? options.unresolvedFallback
-    : 'client_dashboard.html';
+    : appUrl('client_dashboard.html');
   if (!window.sbClient || !session?.user) return unresolvedFallback;
 
   let profile = null;
@@ -361,14 +376,15 @@ document.addEventListener('DOMContentLoaded', () => sanitizeMojibake(document.bo
 
 async function handleAuthRedirect(session) {
   if (session && session.user) {
-    _L.info("User session detected, checking dashboard for role...", { email: session.user.email });
-    const dashboard = await getDashboardForRole(session, { unresolvedFallback: 'client_dashboard.html' });
+    _L.info('User session detected, checking dashboard for role...', { email: session.user.email });
+    const dashboard = await getDashboardForRole(session, { unresolvedFallback: appUrl('client_dashboard.html') });
     const currentPage = currentPageName();
+    const targetPage = pageNameFromUrlish(dashboard);
 
-    _L.debug(`Redirect check: Current = ${currentPage}, Target = ${dashboard}`);
+    _L.debug(`Redirect check: Current = ${currentPage}, Target = ${targetPage}`);
 
     // Prevent redirect loop if already on the correct dashboard
-    if (currentPage !== dashboard) {
+    if (currentPage !== targetPage) {
       _L.info(`Redirecting to ${dashboard}`);
       window.location.href = dashboard;
     }
@@ -387,13 +403,14 @@ async function protectDashboard() {
       // If not authenticated and not on landing page, redirect to landing page
       const currentPage = currentPageName();
       if (!isLandingPage(currentPage)) {
-        window.location.href = 'landing_page.html';
+        window.location.href = appUrl('landing_page.html');
       }
     } else {
       // Make sure the user is allowed to access this dashboard
       const dashboard = await getDashboardForRole(session, { unresolvedFallback: null });
       const currentPage = currentPageName();
-      if (dashboard && currentPage !== dashboard && !isLandingPage(currentPage)) {
+      const targetPage = dashboard ? pageNameFromUrlish(dashboard) : '';
+      if (dashboard && currentPage !== targetPage && !isLandingPage(currentPage)) {
         // If trying to access a different dashboard without permission
         window.location.href = dashboard;
       }
@@ -424,7 +441,7 @@ async function initiateGoogleAuth() {
   const { data, error } = await window.sbClient.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + '/landing_page.html',
+      redirectTo: appUrl('landing_page.html'),
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -447,7 +464,7 @@ async function signOut() {
   if (error) {
     console.error('Error signing out:', error.message);
   } else {
-    window.location.href = 'landing_page.html';
+    window.location.href = appUrl('landing_page.html');
   }
 }
 
@@ -466,7 +483,7 @@ if (window.sbClient && !window.__SC_AUTH_LISTENER_ATTACHED) {
       _L.info("User signed out, redirecting to landing page.");
       const currentPage = currentPageName();
       if (!isLandingPage(currentPage)) {
-        window.location.href = 'landing_page.html';
+        window.location.href = appUrl('landing_page.html');
       }
     }
   });

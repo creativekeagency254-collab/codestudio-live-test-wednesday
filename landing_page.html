@@ -7833,12 +7833,19 @@
   <script>
     // -- Auth helpers ----------------------------------
     if (window.redirectIfLoggedIn) redirectIfLoggedIn();
-    const FIXED_ROLE_ROUTES = {
-      'client@test.com': 'client_dashboard.html',
-      'admin@test.com': 'admin_dashboard.html',
-      'commissioner@test.com': 'sales_dashboard.html',
-      'developer@test.com': 'developer_dashboard.html'
-    };
+    const DASHBOARD_PATH_BY_ROLE = Object.freeze({
+      client: 'client_dashboard.html',
+      developer: 'developer_dashboard.html',
+      commissioner: 'sales_dashboard.html',
+      admin: 'admin_dashboard.html'
+    });
+    const appRoute = (path = 'landing_page.html') => new URL(String(path || '').replace(/^\/+/, ''), `${window.location.origin}/`).toString();
+    const FIXED_ROLE_ROUTES = Object.freeze({
+      'client@test.com': appRoute(DASHBOARD_PATH_BY_ROLE.client),
+      'admin@test.com': appRoute(DASHBOARD_PATH_BY_ROLE.admin),
+      'commissioner@test.com': appRoute(DASHBOARD_PATH_BY_ROLE.commissioner),
+      'developer@test.com': appRoute(DASHBOARD_PATH_BY_ROLE.developer)
+    });
     const LANDING_ROLE_ALIASES = {
       sales: 'commissioner',
       commisioner: 'commissioner',
@@ -7972,10 +7979,10 @@
       }
 
       const routes = {
-        client: 'client_dashboard.html',
-        developer: 'developer_dashboard.html',
-        commissioner: 'sales_dashboard.html',
-        admin: 'admin_dashboard.html'
+        client: appRoute(DASHBOARD_PATH_BY_ROLE.client),
+        developer: appRoute(DASHBOARD_PATH_BY_ROLE.developer),
+        commissioner: appRoute(DASHBOARD_PATH_BY_ROLE.commissioner),
+        admin: appRoute(DASHBOARD_PATH_BY_ROLE.admin)
       };
       const { data: profile } = await window.sbClient
         .from('profiles')

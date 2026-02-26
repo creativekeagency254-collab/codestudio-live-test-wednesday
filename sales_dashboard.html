@@ -2231,6 +2231,21 @@
       return pageUrl.toString();
     }
 
+    function normalizeShareLinkToCurrentOrigin(rawLink, fallbackPage = 'sales_onboarding.html') {
+      const raw = String(rawLink || '').trim();
+      if (!raw) return '';
+      try {
+        const parsed = new URL(raw, `${window.location.origin}/`);
+        const host = String(parsed.hostname || '').toLowerCase();
+        const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host.endsWith('.localhost');
+        if (!isLocalHost) return parsed.toString();
+        const relative = `${parsed.pathname || `/${fallbackPage}`}${parsed.search || ''}${parsed.hash || ''}`;
+        return new URL(relative, `${window.location.origin}/`).toString();
+      } catch (_) {
+        return new URL(fallbackPage, `${window.location.origin}/`).toString();
+      }
+    }
+
     function hydrateOnboardBuilder(user) {
       const existing = loadStoredOnboardConfig();
       const fallback = {
@@ -2271,7 +2286,7 @@
       const user = explicitUser || authData?.user || null;
       const cfg = readOnboardForm();
       saveStoredOnboardConfig(cfg);
-      const shareUrl = buildOnboardingLink(cfg, user);
+      const shareUrl = normalizeShareLinkToCurrentOrigin(buildOnboardingLink(cfg, user), 'sales_onboarding.html');
       const out = document.getElementById('onb-link-output');
       if (out) out.value = shareUrl;
       if (showNotice) toast('Onboarding link generated');
@@ -2280,7 +2295,9 @@
 
     window.copyOnboardingLink = async function () {
       const out = document.getElementById('onb-link-output');
-      const link = (out?.value || '').trim() || await window.generateOnboardingLink(false);
+      const rawLink = (out?.value || '').trim() || await window.generateOnboardingLink(false);
+      const link = normalizeShareLinkToCurrentOrigin(rawLink, 'sales_onboarding.html');
+      if (out && link) out.value = link;
       if (!link) {
         toast('Generate a link first');
         return;
@@ -2299,7 +2316,9 @@
 
     window.previewOnboardingLink = async function () {
       const out = document.getElementById('onb-link-output');
-      const link = (out?.value || '').trim() || await window.generateOnboardingLink(false);
+      const rawLink = (out?.value || '').trim() || await window.generateOnboardingLink(false);
+      const link = normalizeShareLinkToCurrentOrigin(rawLink, 'sales_onboarding.html');
+      if (out && link) out.value = link;
       if (!link) {
         toast('Generate a link first');
         return;
