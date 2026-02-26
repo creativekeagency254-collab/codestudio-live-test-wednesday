@@ -6,7 +6,7 @@ This folder contains the payment and email functions used by dashboards.
 - `send-invoice`: Creates/refreshes Paystack payment link for an invoice and sends invoice email (Google Gmail API first, Resend fallback).
 - `initiate-topup`: Creates wallet top-up and returns Paystack checkout URL for clients.
 - `paystack-webhook`: Verifies Paystack signature and marks invoice/top-up paid or failed.
-- `send-email`: Generic transactional email endpoint (Google Gmail API first, Resend fallback).
+- `send-email`: Generic transactional email endpoint (Google Gmail API first, Resend fallback), also used by first-login client welcome email flow.
 - `send_gmail`: Direct Gmail sender function using OAuth2 secrets (for manual/testing flows).
 
 ## Required secrets

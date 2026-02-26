@@ -12,6 +12,42 @@ function escapeHtml(value: string): string {
 }
 
 function renderTemplate(template: string, data: Record<string, unknown>): { subject: string; html: string } {
+  if (template === "welcome_client") {
+    const name = escapeHtml(String(data.name || data.first_name || "there"));
+    const dashboardUrl = escapeHtml(String(data.dashboard_url || data.site_url || "https://liveteststudiocodemuchemi.netlify.app/client_dashboard.html"));
+    const supportEmail = escapeHtml(String(data.support_email || "creative.keagency254@gmail.com"));
+    const supportWhatsapp = escapeHtml(String(data.support_whatsapp || "+254793832286"));
+    return {
+      subject: "Welcome to CODESTUDIO.KENYA - BUILDING BEST SOFTWARES",
+      html: `
+        <div style="margin:0;padding:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#fff;">
+          <div style="max-width:650px;margin:18px auto;padding:24px;background:#121212;border:1px solid #1f1f1f;border-radius:14px;">
+            <div style="text-align:center;margin-bottom:14px;">
+              <img src="https://smdbfaomeghoejqqkplv.supabase.co/storage/v1/object/public/branding/codestudio-logo-outline.png" alt="CODESTUDIO.KENYA" width="68" height="68" style="display:inline-block;border:0;" />
+              <h2 style="margin:10px 0 4px;color:#16A34A;letter-spacing:.4px;">CODESTUDIO.KENYA</h2>
+              <p style="margin:0;color:#A7F3D0;font-size:12px;letter-spacing:.4px;">BUILDING BEST SOFTWARES</p>
+            </div>
+            <p style="margin:0 0 10px;color:#E5E7EB;">Hi <strong>${name}</strong>, welcome onboard.</p>
+            <p style="margin:0 0 12px;color:#CBD5E1;">Your client account is ready. You can open your dashboard now and continue with project onboarding.</p>
+            <p style="margin:18px 0;">
+              <a href="${dashboardUrl}" style="display:inline-block;padding:12px 18px;background:#16A34A;color:#fff;text-decoration:none;border-radius:10px;font-weight:700;">
+                Open Client Dashboard
+              </a>
+            </p>
+            <ul style="margin:8px 0 0;padding-left:18px;color:#D1FAE5;line-height:1.8;">
+              <li>110% Refund Guarantee</li>
+              <li>Free Prototype</li>
+              <li>Free Hosting</li>
+              <li>Free Domain for 1 Year</li>
+              <li>Free Lifetime Maintenance</li>
+            </ul>
+            <p style="margin:18px 0 0;color:#9CA3AF;font-size:12px;">Support: ${supportEmail} • WhatsApp: ${supportWhatsapp}</p>
+          </div>
+        </div>
+      `,
+    };
+  }
+
   if (template === "proposal_accepted") {
     const name = escapeHtml(String(data.name || "Developer"));
     const brief = escapeHtml(String(data.brief || "your project"));

@@ -200,6 +200,133 @@ function getAuthNameParts(user) {
 }
 window.getAuthNameParts = getAuthNameParts;
 
+const WELCOME_EMAIL_LOCAL_PREFIX = 'sc_welcome_email_sent_';
+
+async function callAuthedEdgeFunction(fn, payload, session, retry401 = true) {
+  const baseUrl = window.SUPABASE_FUNCTIONS_BASE
+    || `${String(window.SUPABASE_URL || SUPABASE_URL).replace(/\/$/, '')}/functions/v1`;
+  const targetFn = String(fn || '').trim();
+  if (!targetFn) throw new Error('Missing edge function name');
+
+  const userToken = String(session?.access_token || '').trim();
+  const anonToken = String(window.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY || '').trim();
+  const candidates = [];
+  if (userToken) candidates.push(userToken);
+  if (anonToken && anonToken !== userToken) candidates.push(anonToken);
+  if (!candidates.length) throw new Error('Missing auth token for edge function call');
+
+  let lastStatus = 0;
+  let lastBody = {};
+
+  for (const token of candidates) {
+    const response = await fetch(`${baseUrl}/${targetFn}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: anonToken || token,
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload || {})
+    });
+
+    const body = await response.json().catch(() => ({}));
+    if (response.ok) return body;
+
+    lastStatus = response.status;
+    lastBody = body;
+
+    if (response.status === 401 && retry401 && token === userToken && window.sbClient?.auth?.refreshSession) {
+      const { data: refreshData } = await window.sbClient.auth.refreshSession();
+      const refreshed = refreshData?.session;
+      if (refreshed?.access_token && refreshed.access_token !== userToken) {
+        return callAuthedEdgeFunction(fn, payload, refreshed, false);
+      }
+    }
+  }
+
+  const errorMessage = lastBody?.error || lastBody?.message || `Edge function ${fn} failed (${lastStatus || 'unknown'})`;
+  throw new Error(String(errorMessage));
+}
+
+async function ensureWelcomeEmailForClient(session, profileHint = null) {
+  if (!window.sbClient || !session?.user?.id || !session.user.email) return;
+
+  const localKey = `${WELCOME_EMAIL_LOCAL_PREFIX}${session.user.id}`;
+  if (localStorage.getItem(localKey) === '1') return;
+
+  const dbClient = window.getDbClient ? window.getDbClient() : window.sbClient;
+  if (!dbClient) return;
+
+  let profile = profileHint;
+  if (!profile || profile.id !== session.user.id || !Object.prototype.hasOwnProperty.call(profile, 'welcome_email_sent_at')) {
+    const { data, error } = await dbClient
+      .from('profiles')
+      .select('id, role, first_name, last_name, welcome_email_sent_at')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
+    if (error) {
+      const raw = String(error?.message || '').toLowerCase();
+      if (raw.includes('welcome_email_sent_at') && raw.includes('column')) {
+        _L.debug('welcome_email_sent_at column not found yet; apply latest migration.');
+      } else {
+        _L.debug('Welcome-email profile lookup failed.', error);
+      }
+      return;
+    }
+    profile = data || null;
+  }
+
+  const role = normalizeRole(profile?.role) || normalizeRole(resolveRoleFromUser(session.user)) || 'client';
+  if (role !== 'client') {
+    localStorage.setItem(localKey, '1');
+    return;
+  }
+
+  if (profile?.welcome_email_sent_at) {
+    localStorage.setItem(localKey, '1');
+    return;
+  }
+
+  const nameParts = getAuthNameParts(session.user);
+  const displayName = nameParts.firstName || nameParts.fullName || String(session.user.email).split('@')[0];
+
+  try {
+    const mailResult = await callAuthedEdgeFunction('send-email', {
+      to: session.user.email,
+      template: 'welcome_client',
+      data: {
+        name: displayName,
+        dashboard_url: dashboardForRole('client'),
+        site_url: appUrl('landing_page.html'),
+        support_email: 'creative.keagency254@gmail.com',
+        support_whatsapp: '+254793832286'
+      }
+    }, session);
+
+    const sent = Boolean(mailResult?.email?.sent || mailResult?.success);
+    if (!sent) {
+      _L.warn('Welcome email did not confirm as sent.', mailResult);
+      return;
+    }
+
+    const timestamp = new Date().toISOString();
+    const { error: markErr } = await dbClient
+      .from('profiles')
+      .update({ welcome_email_sent_at: timestamp, updated_at: timestamp })
+      .eq('id', session.user.id);
+
+    if (markErr) {
+      const raw = String(markErr?.message || '').toLowerCase();
+      if (!raw.includes('welcome_email_sent_at')) _L.warn('Failed to mark welcome_email_sent_at.', markErr);
+    }
+
+    localStorage.setItem(localKey, '1');
+  } catch (error) {
+    _L.warn('Welcome email flow failed.', error);
+  }
+}
+
 async function ensureUserProfile(session) {
   const dbClient = window.getDbClient ? window.getDbClient() : window.sbClient;
   if (!dbClient || !session?.user) return null;
@@ -456,6 +583,11 @@ async function redirectIfLoggedIn() {
   if (!window.sbClient) return;
   const { data: { session }, error } = await window.sbClient.auth.getSession();
   if (session) {
+    try {
+      await ensureWelcomeEmailForClient(session);
+    } catch (e) {
+      _L.debug('Welcome email check during redirectIfLoggedIn failed.', e);
+    }
     handleAuthRedirect(session);
   }
 }
@@ -505,12 +637,18 @@ if (window.sbClient && !window.__SC_AUTH_LISTENER_ATTACHED) {
   window.sbClient.auth.onAuthStateChange(async (event, session) => {
     _L.debug(`Auth Event: ${event}`, { sessionSet: !!session });
 
-    if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+    if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
       if (session?.user) {
+        let profile = null;
         try {
-          await ensureUserProfile(session);
+          profile = await ensureUserProfile(session);
         } catch (syncErr) {
           _L.debug('ensureUserProfile during auth event failed.', syncErr);
+        }
+        try {
+          await ensureWelcomeEmailForClient(session, profile);
+        } catch (welcomeErr) {
+          _L.debug('ensureWelcomeEmailForClient during auth event failed.', welcomeErr);
         }
       }
       const currentPage = currentPageName();
