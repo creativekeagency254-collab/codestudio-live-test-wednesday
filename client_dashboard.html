@@ -505,9 +505,10 @@
     /* premium surface themes */
     .surface-pill {
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      justify-content: center;
+      gap: 6px;
       padding: 7px 10px;
       border-radius: var(--r8);
       background: var(--bg-inset);
@@ -520,18 +521,13 @@
       border-color: var(--border-2);
     }
 
-    .surface-pill-lbl {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-3);
-      line-height: 1;
-    }
-
     .surface-row {
       display: flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
       min-width: 0;
+      width: 100%;
     }
 
     .surface-opt {
@@ -558,6 +554,16 @@
       border-color: var(--bbdr);
       color: var(--text-1);
       background: linear-gradient(120deg, var(--bbg), var(--bg-card));
+    }
+
+    .btn-live {
+      background: var(--green);
+      color: #041408;
+      border: 1px solid var(--gbdr);
+    }
+
+    .btn-live:hover {
+      filter: brightness(.95);
     }
 
     .cardfx-pill {
@@ -1563,6 +1569,18 @@
       background: var(--bg-inset);
     }
 
+    .project-row-action {
+      cursor: pointer;
+    }
+
+    .project-row-action td {
+      transition: background .16s ease;
+    }
+
+    .project-row-action:hover td {
+      background: var(--bg-inset);
+    }
+
     .msg-body {
       flex: 1;
       min-width: 0;
@@ -1903,6 +1921,207 @@
       margin-bottom: 14px;
     }
 
+    .detail-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0 14px;
+    }
+
+    .detail-item {
+      border: 1px solid var(--border-1);
+      border-radius: var(--r10);
+      background: var(--bg-inset);
+      padding: 9px 10px;
+    }
+
+    .detail-k {
+      font-size: 10px;
+      color: var(--text-5);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+
+    .detail-v {
+      font-size: 12px;
+      color: var(--text-1);
+      font-weight: 600;
+      margin-top: 2px;
+      word-break: break-word;
+    }
+
+    .project-detail-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin: 8px 0 0;
+      padding: 10px;
+      border: 1px solid var(--border-1);
+      border-radius: var(--r10);
+      background: var(--bg-inset);
+      font-size: 11px;
+      color: var(--text-3);
+    }
+
+    .project-detail-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .support-fab-client {
+      position: fixed;
+      right: 20px;
+      bottom: 22px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, #242424, #050505 65%);
+      border: 1px solid #3a3a3a;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .16);
+      color: #fff;
+      z-index: 980;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      animation: supportFloatClient 2.8s ease-in-out infinite;
+    }
+
+    .support-fab-client::before {
+      content: 'Live Support';
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 8px;
+      font-size: 9.5px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-4);
+      white-space: nowrap;
+    }
+
+    .support-fab-client svg {
+      width: 24px;
+      height: 24px;
+      stroke: #fff;
+      fill: none;
+      stroke-width: 1.8;
+      animation: supportSpinClient 2s ease-in-out infinite;
+    }
+
+    .support-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .56);
+      backdrop-filter: blur(3px);
+      z-index: 990;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .support-overlay.open {
+      display: flex;
+    }
+
+    .support-panel {
+      width: min(420px, 92vw);
+      border-radius: var(--r16);
+      border: 1px solid var(--border-2);
+      background: var(--bg-card);
+      padding: 16px;
+      box-shadow: 0 20px 48px rgba(0, 0, 0, .35);
+    }
+
+    .support-panel h3 {
+      font-size: 16px;
+      color: var(--text-1);
+      margin-bottom: 4px;
+    }
+
+    .support-panel p {
+      font-size: 12px;
+      color: var(--text-4);
+      margin-bottom: 12px;
+    }
+
+    .support-contact-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid var(--border-1);
+      border-radius: var(--r10);
+      background: var(--bg-inset);
+      margin-bottom: 8px;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+
+    .support-contact-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .support-contact-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .support-icon-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--r8);
+      border: 1px solid var(--border-2);
+      background: var(--bg-page);
+      color: var(--text-2);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background .15s ease, border-color .15s ease;
+    }
+
+    .support-icon-btn:hover {
+      border-color: var(--border-3);
+      background: var(--bg-hover);
+    }
+
+    @keyframes supportFloatClient {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes supportSpinClient {
+      0%,
+      75%,
+      100% {
+        transform: rotate(0deg);
+      }
+      82% {
+        transform: rotate(18deg);
+      }
+      90% {
+        transform: rotate(-18deg);
+      }
+    }
+
     /* toast */
     .toast {
       position: fixed;
@@ -2183,6 +2402,12 @@
 
     /*  MOBILE (0900px)  full overlay slide-in  */
     @media(max-width:900px) {
+      body {
+        height: auto;
+        min-height: 100vh;
+        overflow-y: auto;
+      }
+
       .sidebar {
         position: fixed !important;
         left: 0;
@@ -2205,11 +2430,13 @@
 
       .main {
         width: 100% !important;
+        min-height: 100vh;
       }
 
       .page,
       .content {
         padding: 14px 14px !important;
+        scrollbar-gutter: auto;
       }
 
       .topbar {
@@ -2306,6 +2533,10 @@
         flex-direction: column;
       }
 
+      .detail-list {
+        grid-template-columns: 1fr;
+      }
+
       #msg-role-filter {
         width: 100% !important;
       }
@@ -2317,6 +2548,11 @@
 
       #chat-send-btn {
         width: 100%;
+      }
+
+      .support-fab-client {
+        right: 14px;
+        bottom: 14px;
       }
     }
 
@@ -2527,7 +2763,6 @@
       </svg>Profile Settings </a>
     <div class="sb-foot">
       <div class="surface-pill">
-        <div class="surface-pill-lbl">Premium Surface</div>
         <div class="surface-row">
           <button class="surface-opt" id="surface-opt-glass" onclick="setSurfaceTheme('glass')">Glass Reflection</button>
         </div>
@@ -2555,6 +2790,7 @@
         <div class="db-status" id="db-status">
           <div class="db-dot"></div><span id="db-status-text">Connecting</span>
         </div><button class="btn btn-g" onclick="showPage('projects')">View Projects</button><button class="btn btn-w"
+          onclick="jumpToEscrowTeam()">Escrow & Team</button><button class="btn btn-w"
           onclick="showModal('new-project')"><svg width="11" height="11" fill="none" stroke="currentColor"
             stroke-width="2.5" viewBox="0 0 24 24">
             <line x1="12" y1="5" x2="12" y2="19" />
@@ -2626,7 +2862,7 @@
           </div>
         </div>
       </div>
-      <div class="sl fu d3">Escrow & Team</div>
+      <div class="sl fu d3" id="escrow-team-anchor">Escrow & Team</div>
       <div class="g2 fu d3">
         <div class="card">
           <div class="card-head">
@@ -2796,7 +3032,10 @@
           <div class="card-head">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
               <div class="card-title">Conversations</div>
-              <button class="btn btn-g btn-xs" onclick="focusClientMessageComposer()">New Message</button>
+              <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <button class="btn btn-live btn-xs" onclick="openClientSupportModal()">Live Support</button>
+                <button class="btn btn-g btn-xs" onclick="focusClientMessageComposer()">New Message</button>
+              </div>
             </div>
             <div class="msg-filter-row">
               <input id="msg-search" class="input" placeholder="Search name, role, project" oninput="window.loadClientMessageThreads&&window.loadClientMessageThreads()" style="flex:1;height:32px;">
@@ -3050,10 +3289,111 @@
             <option value="pending">Pending</option>
           </select>
         </div>
+        <div style="grid-column:1 / -1;">
+          <label class="input-lbl" for="new-project-timeline">Timeline (optional)</label>
+          <input class="input" id="new-project-timeline" type="text" placeholder="e.g. 6 weeks or 2 months">
+        </div>
       </div>
       <div class="action-row" style="justify-content:flex-end;">
         <button class="btn btn-g" type="button" onclick="closeClientProjectModal()">Cancel</button>
         <button id="new-project-submit-btn" class="btn btn-w" type="button" onclick="createProjectFromClient()">Create Project</button>
+      </div>
+    </div>
+  </div>
+  <div id="project-detail-modal" class="modal-backdrop" onclick="if(event.target===this) closeClientProjectDetailsModal()">
+    <div class="modal-card">
+      <div class="modal-title" id="project-detail-title">Project Details</div>
+      <div class="modal-sub" id="project-detail-sub">Review status, team assignment, and payment actions.</div>
+      <div id="project-detail-status-box" class="project-detail-status">
+        <span>Payment status</span>
+        <span class="badge b-a" id="project-detail-payment-status">pending</span>
+      </div>
+      <div id="project-detail-grid" class="detail-list"></div>
+      <div id="project-detail-desc" style="margin-top:6px;padding:10px;border:1px solid var(--border-1);border-radius:var(--r10);background:var(--bg-inset);font-size:12px;color:var(--text-3);line-height:1.55;"></div>
+      <div class="project-detail-actions">
+        <button class="btn btn-w" type="button" onclick="payProjectNow()">Pay Now</button>
+        <button class="btn btn-live" type="button" onclick="sendProjectInvoiceEmail()">Send Invoice Email</button>
+        <button class="btn btn-g" type="button" onclick="verifyProjectPaymentStatus()">Verify Payment</button>
+      </div>
+      <div class="action-row" style="justify-content:flex-end;margin-top:10px;">
+        <button class="btn btn-g" type="button" onclick="closeClientProjectDetailsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+  <div id="client-support-modal" class="modal-backdrop" onclick="if(event.target===this) closeClientSupportModal()">
+    <div class="modal-card">
+      <div class="modal-title">Live Support to Admin</div>
+      <div class="modal-sub">Send a direct support request to admin operations.</div>
+      <div class="action-grid">
+        <div>
+          <label class="input-lbl" for="support-project-select">Project (optional)</label>
+          <select class="select" id="support-project-select">
+            <option value="">General Support</option>
+          </select>
+        </div>
+        <div>
+          <label class="input-lbl" for="support-topic">Topic</label>
+          <input class="input" id="support-topic" type="text" placeholder="e.g. Payment confirmation">
+        </div>
+        <div style="grid-column:1 / -1;">
+          <label class="input-lbl" for="support-message">Message</label>
+          <textarea class="input" id="support-message" rows="4" placeholder="Describe your issue in detail"></textarea>
+        </div>
+      </div>
+      <div class="action-row" style="justify-content:flex-end;">
+        <button class="btn btn-g" type="button" onclick="closeClientSupportModal()">Cancel</button>
+        <button class="btn btn-live" type="button" onclick="sendClientSupportMessage()">Send to Admin</button>
+      </div>
+    </div>
+  </div>
+  <button class="support-fab-client" onclick="openClientSupportOverlay()" aria-label="Live support">
+    <svg viewBox="0 0 24 24">
+      <path d="M21 15a2 2 0 0 1-2 2H8l-5 5V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+    </svg>
+  </button>
+  <div id="client-support-overlay" class="support-overlay" onclick="if(event.target===this) closeClientSupportOverlay()">
+    <div class="support-panel">
+      <h3>Live Support</h3>
+      <p>Reach support directly on WhatsApp or email.</p>
+      <div class="support-contact-row">
+        <div class="support-contact-main">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 1 1 21 11.5z"></path>
+            <polyline points="12 7 12 12 15 15"></polyline>
+          </svg>
+          <span>WhatsApp: 0793832286</span>
+        </div>
+        <div class="support-contact-actions">
+          <button class="support-icon-btn" onclick="openSupportWhatsApp()" title="Open WhatsApp">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M16.7 13.4c-.3-.2-1.7-.8-1.9-.9-.3-.1-.4-.2-.6.2-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1a6.8 6.8 0 0 1-3.4-3c-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.6-1.5-.8-2.1-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.1 3c.1.2 2 3.1 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.2-.3-.2-.6-.3z"></path>
+              <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4.1A8 8 0 1 1 20 12z"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="support-contact-row">
+        <div class="support-contact-main">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+            <path d="m3 7 9 6 9-6"></path>
+          </svg>
+          <span id="client-support-email">creative.keagency254@gmail.com</span>
+        </div>
+        <div class="support-contact-actions">
+          <a class="support-icon-btn" href="mailto:creative.keagency254@gmail.com?subject=Client%20Support%20Request&body=Hello%20CODESTUDIO.KENYA%20team%2C%20I%20need%20support%20with..." title="Open email">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M22 2 11 13"></path>
+              <path d="M22 2 15 22l-4-9-9-4 20-7z"></path>
+            </svg>
+          </a>
+          <button class="support-icon-btn" onclick="copyClientSupportEmail()" title="Copy email">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -3072,6 +3412,8 @@
     let CLIENT_THREAD_CACHE = [];
     let CLIENT_CONTACTS = [];
     let CLIENT_INVOICES_CACHE = [];
+    let CLIENT_PROJECTS_CACHE = [];
+    let ACTIVE_PROJECT_DETAIL_ID = null;
     const CLIENT_GUIDE_KEY = 'code-studio-client-guide-dismissed';
     const CLIENT_ONBOARD_CTX_KEY = 'code-studio-client-onboard';
     const AVATAR_PRESET_URLS = [
@@ -3331,6 +3673,8 @@
         .order('created_at', { ascending: false });
 
       if (pErr) console.error("Error fetching projects:", pErr);
+      CLIENT_PROJECTS_CACHE = Array.isArray(projects) ? projects : [];
+      syncSupportProjectOptions();
 
       // 2. Fetch User's Invoices
       let { data: invoices, error: iErr } = await sb.from('invoices')
@@ -3382,7 +3726,7 @@
         projHtml = projects.slice(0, 3).map(p => {
           const devName = p.developer ? `${p.developer.first_name || ''} ${p.developer.last_name || ''}`.trim() : 'Unassigned';
           return `
-              <div class="proj-row" style="padding: 12px; border-bottom: 1px solid var(--border-1);">
+              <div class="proj-row project-row-action" style="padding: 12px; border-bottom: 1px solid var(--border-1);" onclick="openClientProjectDetails('${p.id}')">
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
                   <div style="font-weight:600; color:var(--text-1); font-size:13px;">${p.title}</div>
                   <div style="font-family:'DM Mono', monospace; font-size:12px; color:var(--text-2);">${Number(p.total_value ?? p.budget ?? 0).toLocaleString()} KES</div>
@@ -3439,7 +3783,7 @@
           const devName = p.developer ? `${p.developer.first_name || ''} ${p.developer.last_name || ''}`.trim() : 'Unassigned';
           const statusClass = (p.status === 'active' || p.status === 'in-progress') ? 'b-g' : (p.status === 'review' ? 'b-b' : 'b-w');
           return `
-              <tr>
+              <tr class="project-row-action" onclick="openClientProjectDetails('${p.id}')">
                 <td>
                   <div style="font-weight:600; color:var(--text-1);">${p.title}</div>
                   <div style="font-size:10px; color:var(--text-5);">ID: ${p.id.slice(0, 8)}</div>
@@ -3496,6 +3840,10 @@
       await loadClientMessageThreads();
       await loadClientFinance();
       await loadClientNotifications();
+      if (ACTIVE_PROJECT_DETAIL_ID) {
+        const activeProject = findProjectById(ACTIVE_PROJECT_DETAIL_ID);
+        if (activeProject) renderProjectDetailModal(activeProject);
+      }
     }
 
     function renderEscrowStats(projects, milestoneItems, invoices) {
@@ -4597,6 +4945,7 @@
       const description = String(document.getElementById('new-project-description')?.value || '').trim();
       const budget = Number(document.getElementById('new-project-budget')?.value || 0);
       const status = String(document.getElementById('new-project-status')?.value || 'open').toLowerCase();
+      const timeline = String(document.getElementById('new-project-timeline')?.value || '').trim();
       const salesCtx = getSalesOnboardContext();
       const commissionerId = salesCtx?.salesId || null;
       const submitBtn = document.getElementById('new-project-submit-btn');
@@ -4623,20 +4972,23 @@
             total_value: budget,
             client_id: CURRENT_USER.id,
             status,
-            commissioner_id: commissionerId
+            commissioner_id: commissionerId,
+            timeline: timeline || null
           },
           {
             title,
             description,
             total_value: budget,
             client_id: CURRENT_USER.id,
-            status
+            status,
+            timeline: timeline || null
           },
           {
             title,
             description,
             total_value: budget,
-            client_id: CURRENT_USER.id
+            client_id: CURRENT_USER.id,
+            timeline: timeline || null
           },
           {
             title,
@@ -4660,10 +5012,12 @@
         document.getElementById('new-project-title').value = '';
         document.getElementById('new-project-description').value = '';
         document.getElementById('new-project-budget').value = '';
+        const timelineInput = document.getElementById('new-project-timeline');
+        if (timelineInput) timelineInput.value = '';
         syncClientGuide(1);
-        closeClientProjectModal();
+        if (typeof window.closeClientProjectModal === 'function') window.closeClientProjectModal();
         await loadData();
-        showPage('projects');
+        if (typeof window.showPage === 'function') window.showPage('projects');
       } finally {
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -4731,9 +5085,11 @@
       }
     };
 
-    window.generateInvoicePaymentLink = async function (invoiceId) {
+    window.generateInvoicePaymentLink = async function (invoiceId, options = {}) {
       if (!invoiceId || !window.sbClient || !CURRENT_USER) return;
       const invoice = (CLIENT_INVOICES_CACHE || []).find(i => i.id === invoiceId) || null;
+      const shouldRedirect = options?.redirect !== false;
+      const forceNewRequest = options?.forceNewRequest === true;
       const jwt = await getJwt(true);
       if (!jwt) {
         toast('Secure session not found. Using direct invoice fallback...');
@@ -4746,28 +5102,386 @@
         description: invoice?.description || undefined,
         due_date: invoice?.due_date || undefined,
         notes: invoice?.notes || undefined,
+        force_new_request: forceNewRequest,
       };
       const result = await callEdgeFunction('send-invoice', payload, jwt || SUPABASE_ANON);
       if (result?.error) {
         toast(`Could not generate payment link: ${result.error}`);
-        return;
+        return result;
       }
-      toast('Payment link generated and invoice email sent');
-      if (result.authorization_url) {
+      toast(shouldRedirect ? 'Payment link generated and invoice email sent' : 'Invoice email sent to your registered account');
+      if (result.authorization_url && shouldRedirect) {
         window.location.href = result.authorization_url;
-        return;
+        return result;
       }
       await loadData();
-      showPage('billing');
+      if (!options?.stayOnCurrentPage && typeof window.showPage === 'function') window.showPage('billing');
+      if (ACTIVE_PROJECT_DETAIL_ID) {
+        const current = findProjectById(ACTIVE_PROJECT_DETAIL_ID);
+        if (current) renderProjectDetailModal(current);
+      }
+      return result;
     };
 
     window.addPaymentMethod = addPaymentMethod;
     window.topUpWallet = topUpWallet;
     window.createProjectFromClient = createProjectFromClient;
 
+    function syncSupportProjectOptions() {
+      const select = document.getElementById('support-project-select');
+      if (!select) return;
+      const current = select.value;
+      const options = (CLIENT_PROJECTS_CACHE || [])
+        .map(project => `<option value="${project.id}">${project.title || 'Project'}${project.status ? ` (${project.status})` : ''}</option>`)
+        .join('');
+      select.innerHTML = `<option value="">General Support</option>${options}`;
+      if (current && Array.from(select.options).some(opt => opt.value === current)) {
+        select.value = current;
+      }
+    }
+
+    function humanizeStatus(value) {
+      const normalized = String(value || '').replace(/_/g, ' ').trim();
+      if (!normalized) return 'pending';
+      return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+    }
+
+    function findProjectById(projectId) {
+      return (CLIENT_PROJECTS_CACHE || []).find(project => project.id === projectId) || null;
+    }
+
+    function projectInvoices(projectId) {
+      return (CLIENT_INVOICES_CACHE || [])
+        .filter(inv => inv.project_id === projectId)
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    }
+
+    function latestProjectInvoice(projectId) {
+      return projectInvoices(projectId)[0] || null;
+    }
+
+    function projectPeopleLabel(project) {
+      const commissioner = project?.commissioner
+        ? `${project.commissioner.first_name || ''} ${project.commissioner.last_name || ''}`.trim() || project.commissioner.email
+        : 'Not assigned';
+      const developer = project?.developer
+        ? `${project.developer.first_name || ''} ${project.developer.last_name || ''}`.trim() || project.developer.email
+        : 'Not assigned';
+      return { commissioner, developer };
+    }
+
+    function renderProjectDetailModal(project) {
+      const detailTitle = document.getElementById('project-detail-title');
+      const detailSub = document.getElementById('project-detail-sub');
+      const detailGrid = document.getElementById('project-detail-grid');
+      const detailDesc = document.getElementById('project-detail-desc');
+      const paymentStatus = document.getElementById('project-detail-payment-status');
+      if (!project || !detailGrid || !detailDesc) return;
+
+      const { commissioner, developer } = projectPeopleLabel(project);
+      const totalValue = Number(project.total_value ?? project.budget ?? 0);
+      const invoice = latestProjectInvoice(project.id);
+      const invStatus = String(invoice?.status || 'pending').toLowerCase();
+      const statusClass = invStatus === 'paid' ? 'b-g' : (invStatus === 'failed' ? 'b-r' : 'b-a');
+      const timeline = String(project.timeline || project.due_date || '').trim() || 'Not provided';
+
+      if (detailTitle) detailTitle.textContent = project.title || 'Project Details';
+      if (detailSub) detailSub.textContent = `Status: ${humanizeStatus(project.status)} | Value: KSh ${Math.round(totalValue).toLocaleString()}`;
+      if (paymentStatus) {
+        paymentStatus.className = `badge ${statusClass}`;
+        paymentStatus.textContent = humanizeStatus(invStatus);
+      }
+
+      detailGrid.innerHTML = `
+        <div class="detail-item"><div class="detail-k">Project ID</div><div class="detail-v">${String(project.id || '').slice(0, 12)}</div></div>
+        <div class="detail-item"><div class="detail-k">Budget</div><div class="detail-v">KSh ${Math.round(totalValue).toLocaleString()}</div></div>
+        <div class="detail-item"><div class="detail-k">Timeline</div><div class="detail-v">${timeline}</div></div>
+        <div class="detail-item"><div class="detail-k">Current Status</div><div class="detail-v">${humanizeStatus(project.status)}</div></div>
+        <div class="detail-item"><div class="detail-k">Commissioner</div><div class="detail-v">${commissioner}</div></div>
+        <div class="detail-item"><div class="detail-k">Developer</div><div class="detail-v">${developer}</div></div>
+      `;
+
+      detailDesc.innerHTML = `<strong style="display:block;margin-bottom:5px;color:var(--text-2);">Description</strong>${project.description || 'No description provided yet.'}`;
+    }
+
+    async function ensureProjectInvoice(project) {
+      if (!project?.id) return { invoice: null, error: 'Project not found' };
+      const existing = projectInvoices(project.id);
+      const unpaid = existing.find(inv => ['pending', 'sent', 'draft', 'overdue'].includes(String(inv.status || '').toLowerCase()));
+      if (unpaid) return { invoice: unpaid, error: null };
+
+      const totalValue = Number(project.total_value ?? project.budget ?? 0);
+      if (!Number.isFinite(totalValue) || totalValue <= 0) {
+        return { invoice: null, error: 'Project budget is required before invoice generation.' };
+      }
+      const paidAmount = existing
+        .filter(inv => String(inv.status || '').toLowerCase() === 'paid')
+        .reduce((sum, inv) => sum + Number(inv.amount || 0), 0);
+      const isDeposit = paidAmount <= 0;
+      const depositAmount = Math.max(1, Math.round(totalValue * 0.45));
+      const remainingAmount = Math.max(0, Math.round(totalValue - paidAmount));
+      const targetAmount = isDeposit ? depositAmount : (remainingAmount || depositAmount);
+      const invoiceType = isDeposit ? 'deposit' : 'balance';
+      const description = isDeposit
+        ? `Project Deposit (45%) - ${project.title || 'Project'}`
+        : `Project Balance - ${project.title || 'Project'}`;
+      const dueDate = new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10);
+
+      const variants = [
+        {
+          project_id: project.id,
+          client_id: CURRENT_USER.id,
+          created_by: CURRENT_USER.id,
+          client_email: CURRENT_USER.email,
+          client_name: document.getElementById('sb-name')?.textContent || CURRENT_USER.email,
+          description,
+          amount: targetAmount,
+          currency: 'KES',
+          status: 'pending',
+          invoice_type: invoiceType,
+          due_date: dueDate,
+          notes: isDeposit ? 'Initial deposit required to start project workflow.' : 'Balance payment request.'
+        },
+        {
+          project_id: project.id,
+          client_id: CURRENT_USER.id,
+          client_email: CURRENT_USER.email,
+          client_name: document.getElementById('sb-name')?.textContent || CURRENT_USER.email,
+          description,
+          amount: targetAmount,
+          currency: 'KES',
+          status: 'pending',
+          type: invoiceType,
+          due_date: dueDate
+        },
+        {
+          project_id: project.id,
+          client_email: CURRENT_USER.email,
+          description,
+          amount: targetAmount,
+          status: 'pending'
+        }
+      ];
+
+      const { data, error } = await tryInsertVariants('invoices', variants, true);
+      if (error) {
+        return { invoice: null, error: clientErrorMessage(error, 'Unable to create project invoice') };
+      }
+
+      let resolved = data || null;
+      if (!resolved) {
+        const { data: fetchInvoice } = await (window.getDbClient ? window.getDbClient() : window.sbClient)
+          .from('invoices')
+          .select('*')
+          .eq('project_id', project.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        resolved = fetchInvoice || null;
+      }
+
+      if (resolved) {
+        CLIENT_INVOICES_CACHE = [resolved, ...(CLIENT_INVOICES_CACHE || []).filter(inv => inv.id !== resolved.id)];
+      }
+      return { invoice: resolved, error: null };
+    }
+
+    window.openClientProjectDetails = function (projectId) {
+      const project = findProjectById(projectId);
+      if (!project) {
+        toast('Project details are not available yet.');
+        return;
+      }
+      ACTIVE_PROJECT_DETAIL_ID = project.id;
+      renderProjectDetailModal(project);
+      const modal = document.getElementById('project-detail-modal');
+      if (modal) modal.classList.add('open');
+    };
+
+    window.closeClientProjectDetailsModal = function () {
+      const modal = document.getElementById('project-detail-modal');
+      if (modal) modal.classList.remove('open');
+      ACTIVE_PROJECT_DETAIL_ID = null;
+    };
+
+    window.payProjectNow = async function () {
+      if (!ACTIVE_PROJECT_DETAIL_ID) return;
+      const project = findProjectById(ACTIVE_PROJECT_DETAIL_ID);
+      if (!project) {
+        toast('Project was not found. Refreshing...');
+        await loadData();
+        return;
+      }
+      const { invoice, error } = await ensureProjectInvoice(project);
+      if (error) {
+        toast(error);
+        return;
+      }
+      if (!invoice?.id) {
+        toast('Invoice could not be prepared for this project.');
+        return;
+      }
+      await window.generateInvoicePaymentLink(invoice.id, { redirect: true, forceNewRequest: true });
+    };
+
+    window.sendProjectInvoiceEmail = async function () {
+      if (!ACTIVE_PROJECT_DETAIL_ID) return;
+      const project = findProjectById(ACTIVE_PROJECT_DETAIL_ID);
+      if (!project) {
+        toast('Project was not found. Refreshing...');
+        await loadData();
+        return;
+      }
+      const { invoice, error } = await ensureProjectInvoice(project);
+      if (error) {
+        toast(error);
+        return;
+      }
+      if (!invoice?.id) {
+        toast('Invoice could not be prepared for this project.');
+        return;
+      }
+      const result = await window.generateInvoicePaymentLink(invoice.id, { redirect: false, forceNewRequest: true, stayOnCurrentPage: true });
+      if (!result?.error) {
+        toast('Invoice sent to your registered email successfully.');
+      }
+    };
+
+    window.verifyProjectPaymentStatus = async function () {
+      if (!ACTIVE_PROJECT_DETAIL_ID || !window.sbClient) return;
+      const invoice = latestProjectInvoice(ACTIVE_PROJECT_DETAIL_ID);
+      if (!invoice?.id) {
+        toast('No invoice found for this project yet.');
+        return;
+      }
+      const sb = window.getDbClient ? window.getDbClient() : window.sbClient;
+      const { data, error } = await sb.from('invoices').select('*').eq('id', invoice.id).maybeSingle();
+      if (error || !data) {
+        toast(clientErrorMessage(error, 'Unable to verify payment right now.'));
+        return;
+      }
+      CLIENT_INVOICES_CACHE = [data, ...(CLIENT_INVOICES_CACHE || []).filter(inv => inv.id !== data.id)];
+      if (String(data.status || '').toLowerCase() === 'paid') {
+        toast('Payment confirmed. Project funding is successful and workflow can continue.');
+      } else {
+        toast(`Current payment status: ${humanizeStatus(data.status || 'pending')}`);
+      }
+      renderProjectDetailModal(findProjectById(ACTIVE_PROJECT_DETAIL_ID));
+      await loadData();
+    };
+
+    window.openClientSupportModal = function () {
+      syncSupportProjectOptions();
+      const modal = document.getElementById('client-support-modal');
+      if (modal) modal.classList.add('open');
+    };
+
+    window.closeClientSupportModal = function () {
+      const modal = document.getElementById('client-support-modal');
+      if (modal) modal.classList.remove('open');
+    };
+
+    window.sendClientSupportMessage = async function () {
+      if (!window.sbClient || !CURRENT_USER) return;
+      const sb = window.getDbClient ? window.getDbClient() : window.sbClient;
+      const topic = String(document.getElementById('support-topic')?.value || '').trim();
+      const message = String(document.getElementById('support-message')?.value || '').trim();
+      const projectId = String(document.getElementById('support-project-select')?.value || '').trim() || null;
+      if (!message) {
+        toast('Please type your support message first.');
+        return;
+      }
+
+      const { data: admins, error: adminErr } = await sb
+        .from('profiles')
+        .select('id, first_name, last_name, email')
+        .eq('role', 'admin')
+        .limit(5);
+      if (adminErr || !admins?.length) {
+        toast(clientErrorMessage(adminErr, 'No admin support account available.'));
+        return;
+      }
+
+      const project = projectId ? findProjectById(projectId) : null;
+      const contextParts = [];
+      if (topic) contextParts.push(`Topic: ${topic}`);
+      if (project?.title) contextParts.push(`Project: ${project.title}`);
+      const supportBody = `[SUPPORT] ${contextParts.join(' | ') || 'General'}\n${message}`;
+
+      const rows = admins.map(admin => ({
+        sender_id: CURRENT_USER.id,
+        receiver_id: admin.id,
+        project_id: projectId,
+        content: supportBody,
+        is_read: false
+      }));
+      const { error } = await sb.from('messages').insert(rows);
+      if (error) {
+        toast(clientErrorMessage(error, 'Could not send support request.'));
+        return;
+      }
+
+      const notificationRows = admins.map(admin => ({
+        user_id: admin.id,
+        type: 'support_message',
+        title: 'Client support request',
+        content: supportBody.slice(0, 220),
+        payload: { from_client_id: CURRENT_USER.id, project_id: projectId, topic: topic || null },
+        is_read: false
+      }));
+      await sb.from('notifications').insert(notificationRows);
+
+      document.getElementById('support-topic').value = '';
+      document.getElementById('support-message').value = '';
+      if (document.getElementById('support-project-select')) document.getElementById('support-project-select').value = '';
+      if (typeof window.closeClientSupportModal === 'function') window.closeClientSupportModal();
+      toast('Support request sent to admin.');
+      const primaryAdmin = admins[0];
+      if (primaryAdmin?.id) {
+        const adminName = `${primaryAdmin.first_name || ''} ${primaryAdmin.last_name || ''}`.trim() || primaryAdmin.email || 'Admin';
+        if (typeof window.openClientThread === 'function') {
+          await window.openClientThread(primaryAdmin.id, adminName);
+        }
+      }
+      await loadClientMessageThreads();
+    };
+
+    window.openClientSupportOverlay = function () {
+      const overlay = document.getElementById('client-support-overlay');
+      if (overlay) overlay.classList.add('open');
+    };
+
+    window.closeClientSupportOverlay = function () {
+      const overlay = document.getElementById('client-support-overlay');
+      if (overlay) overlay.classList.remove('open');
+    };
+
+    window.openSupportWhatsApp = function () {
+      const msg = encodeURIComponent('Hello CODESTUDIO.KENYA support, I need help with my project.');
+      window.open(`https://wa.me/254793832286?text=${msg}`, '_blank', 'noopener');
+    };
+
+    window.copyClientSupportEmail = async function () {
+      const email = 'creative.keagency254@gmail.com';
+      try {
+        await navigator.clipboard.writeText(email);
+        toast('Support email copied.');
+      } catch (_) {
+        toast(`Copy failed. Use: ${email}`);
+      }
+    };
+
     window.showModal = function (name) {
       if (name === 'new-project') openClientProjectModal();
     }
+
+    window.jumpToEscrowTeam = function () {
+      if (typeof window.showPage === 'function') window.showPage('dashboard');
+      setTimeout(() => {
+        const anchor = document.getElementById('escrow-team-anchor');
+        if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 80);
+    };
 
     window.skipClientGuide = function () {
       localStorage.setItem(CLIENT_GUIDE_KEY, '1');
@@ -5095,7 +5809,22 @@
       if (e.key !== 'Escape') return;
       const modal = document.getElementById('project-modal');
       if (modal?.classList.contains('open')) {
-        closeClientProjectModal();
+        if (typeof window.closeClientProjectModal === 'function') window.closeClientProjectModal();
+        return;
+      }
+      const detailModal = document.getElementById('project-detail-modal');
+      if (detailModal?.classList.contains('open')) {
+        if (typeof window.closeClientProjectDetailsModal === 'function') window.closeClientProjectDetailsModal();
+        return;
+      }
+      const supportModal = document.getElementById('client-support-modal');
+      if (supportModal?.classList.contains('open')) {
+        if (typeof window.closeClientSupportModal === 'function') window.closeClientSupportModal();
+        return;
+      }
+      const supportOverlay = document.getElementById('client-support-overlay');
+      if (supportOverlay?.classList.contains('open')) {
+        if (typeof window.closeClientSupportOverlay === 'function') window.closeClientSupportOverlay();
       }
     });
 

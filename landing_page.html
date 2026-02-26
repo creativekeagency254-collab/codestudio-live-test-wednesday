@@ -3827,6 +3827,175 @@
       background: var(--accent2)
     }
 
+    .live-support-wrap {
+      position: fixed;
+      right: 20px;
+      bottom: 148px;
+      z-index: 870;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .live-support-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: rgba(0, 0, 0, .38);
+      border: 1px solid rgba(125, 200, 112, .25);
+      border-radius: 999px;
+      padding: 4px 8px;
+      backdrop-filter: blur(8px);
+    }
+
+    .live-support-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      border: 1px solid rgba(125, 200, 112, .45);
+      background: radial-gradient(circle at 30% 30%, #9ade8a, #3f8d1e 68%);
+      color: #06210f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 28px rgba(0, 0, 0, .28);
+      animation: supportLandingFloat 2.8s ease-in-out infinite;
+    }
+
+    .live-support-btn svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 1.8;
+      animation: supportLandingSpin 2s ease-in-out infinite;
+    }
+
+    .live-support-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 2005;
+      background: rgba(0, 0, 0, .58);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .live-support-overlay.open {
+      display: flex;
+    }
+
+    .live-support-modal {
+      width: min(420px, 92vw);
+      border-radius: 16px;
+      border: 1px solid var(--border2);
+      background: var(--card);
+      box-shadow: var(--sh2);
+      padding: 16px;
+    }
+
+    .live-support-modal h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 20px;
+      color: var(--heading);
+      margin-bottom: 4px;
+      letter-spacing: -.01em;
+    }
+
+    .live-support-modal p {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 12px;
+    }
+
+    .live-support-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--card2);
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .live-support-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .live-support-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .live-support-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      border: 1px solid var(--border2);
+      background: var(--surface);
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .live-support-icon:hover {
+      border-color: var(--border3);
+      background: var(--card3);
+    }
+
+    @keyframes supportLandingFloat {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-8px);
+      }
+    }
+
+    @keyframes supportLandingSpin {
+      0%,
+      75%,
+      100% {
+        transform: rotate(0deg);
+      }
+      82% {
+        transform: rotate(16deg);
+      }
+      90% {
+        transform: rotate(-16deg);
+      }
+    }
+
+    @media(max-width:900px) {
+      .live-support-wrap {
+        right: 14px;
+        bottom: 154px;
+      }
+
+      .live-support-label {
+        font-size: 9px;
+        padding: 3px 7px;
+      }
+    }
+
     /* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    ANIMATIONS
 â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
@@ -6581,6 +6750,60 @@
 
   <!-- â•â•â•â• FAB â•â•â•â• -->
   <button class="fab" onclick="scrollToSec('#commissioners')" aria-label="Start a project">&#43;</button>
+  <div class="live-support-wrap">
+    <div class="live-support-label">Live Support</div>
+    <button class="live-support-btn" onclick="openLandingSupport()" aria-label="Open live support">
+      <svg viewBox="0 0 24 24">
+        <path d="M21 15a2 2 0 0 1-2 2H8l-5 5V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+    </button>
+  </div>
+  <div id="landing-support-overlay" class="live-support-overlay" onclick="if(event.target===this)closeLandingSupport()">
+    <div class="live-support-modal">
+      <h3>Talk to Support</h3>
+      <p>Choose your fastest channel to reach CODE STUDIO ke support.</p>
+      <div class="live-support-row">
+        <div class="live-support-main">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M16.7 13.4c-.3-.2-1.7-.8-1.9-.9-.3-.1-.4-.2-.6.2-.2.3-.7.9-.8 1.1-.2.2-.3.2-.6.1a6.8 6.8 0 0 1-3.4-3c-.2-.3 0-.4.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5 0-.1-.6-1.5-.8-2.1-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.8.4s-1 1-1 2.4 1 2.8 1.1 3c.1.2 2 3.1 4.8 4.3.7.3 1.2.5 1.6.6.7.2 1.4.2 1.9.1.6-.1 1.7-.7 1.9-1.4.2-.7.2-1.2.2-1.4-.1-.2-.3-.2-.6-.3z"></path>
+            <path d="M20 12a8 8 0 0 1-11.8 7L4 20l1.1-4.1A8 8 0 1 1 20 12z"></path>
+          </svg>
+          <span>WhatsApp 0793832286</span>
+        </div>
+        <div class="live-support-actions">
+          <button class="live-support-icon" onclick="openLandingWhatsApp()" title="Open WhatsApp">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M21 11.5a8.38 8.38 0 0 1-1.9 5.4A8.5 8.5 0 1 1 21 11.5z"></path>
+              <polyline points="12 7 12 12 15 15"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="live-support-row">
+        <div class="live-support-main">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="5" width="18" height="14" rx="2"></rect>
+            <path d="m3 7 9 6 9-6"></path>
+          </svg>
+          <span id="landing-support-email">creative.keagency254@gmail.com</span>
+        </div>
+        <div class="live-support-actions">
+          <a class="live-support-icon" href="mailto:creative.keagency254@gmail.com?subject=Live%20Support%20Request&body=Hello%20CODESTUDIO.KENYA%20team%2C%20I%20need%20support%20with..." title="Email support">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M22 2 11 13"></path>
+              <path d="M22 2 15 22l-4-9-9-4 20-7z"></path>
+            </svg>
+          </a>
+          <button class="live-support-icon" onclick="copyLandingSupportEmail()" title="Copy email">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script>
     /* - Theme: persist + system preference - */
@@ -6796,6 +7019,31 @@
       toastTimer = setTimeout(() => tw.classList.remove('show'), 3200);
     }
 
+    function openLandingSupport() {
+      const overlay = document.getElementById('landing-support-overlay');
+      if (overlay) overlay.classList.add('open');
+    }
+
+    function closeLandingSupport() {
+      const overlay = document.getElementById('landing-support-overlay');
+      if (overlay) overlay.classList.remove('open');
+    }
+
+    function openLandingWhatsApp() {
+      const msg = encodeURIComponent('Hello CODE STUDIO ke team, I need support with my project.');
+      window.open(`https://wa.me/254793832286?text=${msg}`, '_blank', 'noopener');
+    }
+
+    async function copyLandingSupportEmail() {
+      const email = 'creative.keagency254@gmail.com';
+      try {
+        await navigator.clipboard.writeText(email);
+        showToast('Support email copied.');
+      } catch (_) {
+        showToast(`Copy failed. Use ${email}`);
+      }
+    }
+
     /* - Pricing Calculator - */
     function calcUpdate() {
       const base = parseInt(document.getElementById('calc-type').value) || 60000;
@@ -6906,7 +7154,10 @@
 
     /* Auth functions defined in auth script block below */
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') closeAuth();
+      if (e.key === 'Escape') {
+        closeAuth();
+        closeLandingSupport();
+      }
     });
 
 
@@ -7931,6 +8182,7 @@
     }
 
     function openAuth(tab = 'login') {
+      closeLandingSupport();
       document.getElementById('auth-overlay').classList.add('open');
       switchAuth(tab);
       document.body.classList.add('auth-open');
@@ -8115,7 +8367,12 @@
         renderOnboardInvite();
       }
     })();
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAuth(); });
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        closeAuth();
+        closeLandingSupport();
+      }
+    });
   </script>
   <script src="https://unpkg.com/aos@next/dist/aos.js"></script>
   <script>AOS.init({ duration: 800, once: true });</script>

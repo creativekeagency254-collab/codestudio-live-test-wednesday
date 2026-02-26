@@ -2464,6 +2464,16 @@
             </div>
           </div>
 
+          <div class="card fu d3" style="margin-bottom:16px;">
+            <div class="card-head">
+              <div class="card-title">Client Support Inbox</div>
+              <button class="btn btn-g btn-xs" onclick="renderSupportInbox()">Refresh</button>
+            </div>
+            <div id="dash-support-inbox" style="display:flex;flex-direction:column;gap:8px;">
+              <div style="padding:12px;text-align:center;color:var(--s5);font-size:12px;">No support conversations yet.</div>
+            </div>
+          </div>
+
           <div class="sl fu d4">Projects & Disputes</div>
           <div class="g2l fu d4">
             <div class="card">
@@ -3303,6 +3313,7 @@
     let DISPUTES = [];
     let AUDIT_LOGS = [];
     let LIVE_FEED = [];
+    let SUPPORT_INBOX = [];
     let currentAdminName = 'Administrator';
     let currentAdminUserId = null;
     let currentAdminProfile = null;
@@ -4087,6 +4098,65 @@
         ? TRANSACTIONS.slice(0, 5).map(t => ledgerRow(t)).join('')
         : '<tr><td colspan="7" style="text-align:center;color:var(--s5);padding:16px;">No transactions yet.</td></tr>';
     }
+
+    function renderSupportInbox() {
+      const host = document.getElementById('dash-support-inbox');
+      if (!host) return;
+      if (!SUPPORT_INBOX.length) {
+        host.innerHTML = '<div style="padding:12px;text-align:center;color:var(--s5);font-size:12px;">No support conversations yet.</div>';
+        return;
+      }
+      host.innerHTML = SUPPORT_INBOX.slice(0, 10).map(item => {
+        const safeName = String(item.sender_name || 'Client').replace(/'/g, '');
+        return `
+          <div style="border:1px solid var(--bd1);border-radius:10px;padding:10px;background:var(--b3);">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+              <div style="font-size:12px;font-weight:700;color:var(--w);">${item.sender_name || 'Client'} <span style="font-size:10px;color:var(--s5);font-weight:600;">${item.sender_email || ''}</span></div>
+              <span class="badge ${item.is_read ? 'b-g' : 'b-a'}">${item.is_read ? 'Seen' : 'New'}</span>
+            </div>
+            <div style="font-size:11px;color:var(--s3);margin-top:6px;line-height:1.55;">${item.preview}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+              <div style="font-size:10px;color:var(--s5);">${item.created_at}</div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn btn-g btn-xs" onclick="replySupportMessage('${item.sender_id}','${safeName}')">Reply</button>
+                <button class="btn btn-gr btn-xs" onclick="markSupportThreadRead('${item.sender_id}')">Mark Read</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.replySupportMessage = async function (receiverId, receiverName) {
+      if (!window.sbClient || !currentAdminUserId || !receiverId) return;
+      const text = prompt(`Reply to ${receiverName || 'client'}:`, 'Hello, we have received your support request and are reviewing it now.');
+      if (!text || !text.trim()) return;
+      const sb = window.sbClient;
+      const { error } = await sb.from('messages').insert({
+        sender_id: currentAdminUserId,
+        receiver_id: receiverId,
+        project_id: null,
+        content: `[ADMIN SUPPORT] ${text.trim()}`,
+        is_read: false
+      });
+      if (error) {
+        toast(`Reply failed: ${error.message || error}`);
+        return;
+      }
+      toast('Support reply sent.');
+      await loadAdminData();
+    };
+
+    window.markSupportThreadRead = async function (senderId) {
+      if (!window.sbClient || !currentAdminUserId || !senderId) return;
+      const sb = window.sbClient;
+      await sb.from('messages')
+        .update({ is_read: true })
+        .eq('receiver_id', currentAdminUserId)
+        .eq('sender_id', senderId)
+        .eq('is_read', false);
+      await loadAdminData();
+    };
 
     //  Render All Users 
     function renderUsers() {
@@ -5087,6 +5157,7 @@
       DISPUTES = [];
       AUDIT_LOGS = [];
       LIVE_FEED = [];
+      SUPPORT_INBOX = [];
       if (!sb) {
         if (window._L) _L.warn("Supabase client not found.");
         renderAll();
@@ -5341,6 +5412,40 @@
           DISPUTES = [];
         }
 
+        const { data: supportRows, error: supportErr } = await sb
+          .from('messages')
+          .select(`
+            id, content, created_at, is_read, sender_id, receiver_id,
+            sender:profiles!messages_sender_id_fkey(first_name,last_name,email)
+          `)
+          .eq('receiver_id', currentAdminUserId)
+          .order('created_at', { ascending: false })
+          .limit(60);
+        if (!supportErr && Array.isArray(supportRows)) {
+          SUPPORT_INBOX = supportRows
+            .filter(row => {
+              const content = String(row.content || '').toLowerCase();
+              return content.includes('[support]') || content.includes('[admin support]');
+            })
+            .map(row => {
+              const senderName = row.sender
+                ? `${row.sender.first_name || ''} ${row.sender.last_name || ''}`.trim() || row.sender.email || 'Client'
+                : 'Client';
+              return {
+                id: row.id,
+                sender_id: row.sender_id,
+                sender_name: senderName,
+                sender_email: row.sender?.email || '',
+                preview: String(row.content || '').replace(/\[support\]|\[admin support\]/ig, '').trim().slice(0, 220) || 'Support message',
+                is_read: !!row.is_read,
+                created_at: row.created_at ? new Date(row.created_at).toLocaleString() : 'recent'
+              };
+            });
+        } else {
+          if (supportErr && window._L) _L.warn('Error fetching support inbox:', supportErr);
+          SUPPORT_INBOX = [];
+        }
+
         const { data: auditRows, error: auditErr } = await sb
           .from('audit_logs')
           .select('action, target_table, target_id, created_at, actor:profiles!audit_logs_actor_id_fkey(first_name,last_name,email)')
@@ -5387,6 +5492,7 @@
 
     function renderAll() {
       renderDashboard();
+      renderSupportInbox();
       renderUsers();
       renderProjects();
       renderVault();
