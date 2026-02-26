@@ -4095,23 +4095,29 @@
             const invStatus = String(inv.status || 'pending').toLowerCase();
             const statusClass = invStatus === 'paid' ? 'b-g' : (invStatus === 'sent' ? 'b-b' : (invStatus === 'failed' ? 'b-r' : 'b-a'));
             const isPayable = ['sent', 'pending', 'overdue'].includes(invStatus);
+            const payLabel = invoicePaymentActionLabel(inv);
+            const typeLabel = invoiceTypeLabel(inv);
             let payBtn = '';
             if (isPayable && inv.paystack_authorization_url) {
-              payBtn = `<a href="${inv.paystack_authorization_url}" target="_blank" class="btn btn-w btn-xs">Pay Now</a>`;
+              payBtn = `<a href="${inv.paystack_authorization_url}" target="_blank" class="btn btn-w btn-xs">${payLabel}</a><button class="btn btn-g btn-xs" onclick="copyInvoiceLink('${encodeURIComponent(inv.paystack_authorization_url)}')">Copy Link</button>`;
             } else if (isPayable && inv.id) {
-              payBtn = `<button class="btn btn-g btn-xs" onclick="generateInvoicePaymentLink('${inv.id}')">Generate Link</button>`;
+              payBtn = `<button class="btn btn-g btn-xs" onclick="generateInvoicePaymentLink('${inv.id}', { stayOnCurrentPage: true })">Generate Link</button>`;
             }
+            const emailBtn = isPayable && inv.id
+              ? `<button class="btn btn-a btn-xs" onclick="generateInvoicePaymentLink('${inv.id}', { redirect: false, stayOnCurrentPage: true, forceNewRequest: true })">Email Invoice</button>`
+              : '';
             const invoiceLabel = inv.invoice_number || `#${String(inv.id || '').slice(-6).toUpperCase()}`;
+            const notesLine = inv.notes ? `<div style="font-size:10px;color:var(--text-5);margin-top:2px;">Notes: ${inv.notes}</div>` : '';
             return `
                 <tr>
                   <td>
                     <div style="font-weight:600; color:var(--text-1);">${invoiceLabel}</div>
                     <div style="font-size:10px; color:var(--text-5);">${inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '-'}</div>
                   </td>
-                  <td style="font-size:13px;">${inv.description || 'Invoice'}</td>
+                  <td style="font-size:13px;"><div style="font-weight:600;color:var(--text-2);">${typeLabel}</div><div>${inv.description || 'Invoice'}</div>${notesLine}</td>
                   <td style="font-family:'DM Mono', monospace; font-size:13px;">${Number(inv.amount || 0).toLocaleString()} ${String(inv.currency || 'KES').toUpperCase()}</td>
                   <td><span class="badge ${statusClass}">${invStatus}</span></td>
-                  <td>${payBtn}</td>
+                  <td><div style="display:flex;gap:6px;flex-wrap:wrap;">${payBtn}${emailBtn}</div></td>
                 </tr>`;
           }).join('');
         }
@@ -4219,40 +4225,48 @@
 
     function renderBillingInvoiceSummary(invoices) {
       const list = Array.isArray(invoices) ? invoices : [];
+      const newestList = [...list].sort((a, b) => new Date(b?.created_at || 0) - new Date(a?.created_at || 0));
       const stats = document.getElementById('billing-invoice-stats');
       const rows = document.getElementById('billing-invoice-list');
       if (!stats || !rows) return;
 
-      if (!list.length) {
+      if (!newestList.length) {
         stats.textContent = 'No invoices available for this account yet.';
         rows.innerHTML = '<div class="loading-text" style="padding:12px;text-align:center;color:var(--text-5);">No invoices yet.</div>';
         return;
       }
 
-      const paid = list.filter(i => String(i.status || '').toLowerCase() === 'paid');
-      const outstanding = list.filter(i => ['pending', 'sent', 'overdue'].includes(String(i.status || '').toLowerCase()));
+      const paid = newestList.filter(i => String(i.status || '').toLowerCase() === 'paid');
+      const outstanding = newestList.filter(i => ['pending', 'sent', 'overdue'].includes(String(i.status || '').toLowerCase()));
       const paidTotal = paid.reduce((acc, i) => acc + Number(i.amount || 0), 0);
       const outstandingTotal = outstanding.reduce((acc, i) => acc + Number(i.amount || 0), 0);
       stats.textContent = `Paid: KSh ${Math.round(paidTotal).toLocaleString()}  |  Outstanding: KSh ${Math.round(outstandingTotal).toLocaleString()}`;
 
-      rows.innerHTML = list.slice(0, 4).map(inv => {
+      rows.innerHTML = newestList.slice(0, 4).map(inv => {
         const status = String(inv.status || 'pending').toLowerCase();
         const statusCls = status === 'paid' ? 'b-g' : (status === 'failed' ? 'b-r' : 'b-a');
         const isPayable = ['pending', 'sent', 'overdue'].includes(status);
+        const payLabel = invoicePaymentActionLabel(inv);
+        const typeLabel = invoiceTypeLabel(inv);
         const payAction = isPayable
           ? (inv.paystack_authorization_url
-            ? `<a href="${inv.paystack_authorization_url}" target="_blank" class="btn btn-w btn-xs">Pay</a>`
-            : `<button class="btn btn-g btn-xs" onclick="generateInvoicePaymentLink('${inv.id}')">Generate</button>`)
+            ? `<a href="${inv.paystack_authorization_url}" target="_blank" class="btn btn-w btn-xs">${payLabel}</a><button class="btn btn-g btn-xs" onclick="copyInvoiceLink('${encodeURIComponent(inv.paystack_authorization_url)}')">Copy</button>`
+            : `<button class="btn btn-g btn-xs" onclick="generateInvoicePaymentLink('${inv.id}', { stayOnCurrentPage: true })">Generate</button>`)
           : '';
+        const emailAction = isPayable && inv.id ? `<button class="btn btn-a btn-xs" onclick="generateInvoicePaymentLink('${inv.id}', { redirect: false, stayOnCurrentPage: true, forceNewRequest: true })">Email</button>` : '';
         const invLabel = inv.invoice_number || `#${String(inv.id || '').slice(-6).toUpperCase()}`;
+        const notesLine = inv.notes ? `<div style="font-size:10px;color:var(--text-5);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${inv.notes}</div>` : '';
         return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 10px;border:1px solid var(--border-1);border-radius:var(--r10);background:var(--bg-inset);">
           <div style="min-width:0;">
+            <div style="font-size:11px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.05em;">${typeLabel}</div>
             <div style="font-size:12px;font-weight:600;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${invLabel}  ${inv.description || 'Invoice'}</div>
             <div style="font-size:10px;color:var(--text-5);margin-top:2px;">${inv.created_at ? new Date(inv.created_at).toLocaleDateString() : ''}</div>
+            ${notesLine}
           </div>
           <div style="display:flex;align-items:center;gap:6px;">
             <span class="badge ${statusCls}">${status}</span>
             ${payAction}
+            ${emailAction}
           </div>
         </div>`;
       }).join('');
@@ -5427,6 +5441,38 @@
       }
       return result;
     };
+
+    window.copyInvoiceLink = async function (encodedLink) {
+      const link = decodeURIComponent(String(encodedLink || ''));
+      if (!link) {
+        toast('No link available to copy.');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(link);
+        toast('Payment link copied.');
+      } catch (_) {
+        toast('Unable to copy link automatically.');
+      }
+    };
+
+    function invoiceTypeLabel(inv) {
+      const rawType = String(inv?.type || inv?.invoice_type || '').toLowerCase();
+      const description = String(inv?.description || '').toLowerCase();
+      if (rawType.includes('deposit') || description.includes('deposit')) return 'Deposit Invoice (45%)';
+      if (rawType.includes('balance') || description.includes('balance') || description.includes('final')) return 'Balance Invoice';
+      if (rawType.includes('milestone') || description.includes('milestone')) return 'Milestone Invoice';
+      if (rawType.includes('top') || description.includes('top up') || description.includes('top-up')) return 'Top-up Invoice';
+      return 'Project Invoice';
+    }
+
+    function invoicePaymentActionLabel(inv) {
+      const label = invoiceTypeLabel(inv).toLowerCase();
+      if (label.includes('deposit')) return 'Pay Deposit';
+      if (label.includes('balance')) return 'Pay Balance';
+      if (label.includes('milestone')) return 'Pay Milestone';
+      return 'Pay Now';
+    }
 
     window.addPaymentMethod = addPaymentMethod;
     window.topUpWallet = topUpWallet;

@@ -2747,10 +2747,11 @@
                 </div>
                 <div>
                   <label class="input-lbl">Link to Project</label>
-                  <select class="inp" id="inv-project" style="cursor:pointer">
+                  <select class="inp" id="inv-project" style="cursor:pointer" onchange="handleInvoiceProjectSelect()">
                     <option value=""> No project </option>
                   </select>
                 </div>
+                <div id="inv-client-contact" style="font-size:11px;color:var(--s5);margin-top:-4px;">Client details will appear here when a project is selected.</div>
                 <div><label class="input-lbl">Notes (optional)</label><textarea class="inp" id="inv-notes" rows="2"
                     placeholder="Any extra info for the client&" style="resize:vertical"></textarea></div>
                 <button class="btn btn-b" id="inv-send-btn" onclick="sendInvoice()" style="margin-top:6px;gap:8px">
@@ -3830,6 +3831,11 @@
         const sbg = statusBg[normalizedStatus] || 'transparent';
         const creatorName = inv.creator ? `${inv.creator.first_name || ''} ${inv.creator.last_name || ''}`.trim() || inv.creator.email : 'Unknown';
         const createdAtMs = inv.created_at ? new Date(inv.created_at).getTime() : 0;
+        const projectCtx = PROJECTS.find(p => p.id === inv.project_id);
+        const clientCtx = USERS.find(u => u.id === inv.client_id) || USERS.find(u => u.email === inv.client_email);
+        const clientName = inv.client_name || clientCtx?.name || projectCtx?.client || 'Client';
+        const clientEmail = inv.client_email || clientCtx?.email || projectCtx?.clientEmail || '-';
+        const clientPhone = clientCtx?.phone || projectCtx?.clientPhone || '-';
         const canRegenerate = ['pending', 'sent', 'processing', 'overdue'].includes(normalizedStatus)
           && createdAtMs > 0
           && ((Date.now() - createdAtMs) >= 12 * 60 * 60 * 1000);
@@ -3838,8 +3844,9 @@
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
               <div style="font-size:13px;font-weight:600;color:var(--s1)">${inv.description}</div>
-              <div style="font-size:11px;color:var(--s4);margin-top:2px">To: ${inv.client_email} | By: ${creatorName}</div>
+              <div style="font-size:11px;color:var(--s4);margin-top:2px">To: ${clientName} (${clientEmail}) | Phone: ${clientPhone} | By: ${creatorName}</div>
               ${inv.project ? `<div style="font-size:11px;color:var(--s5)">Project: ${inv.project.title}</div>` : ''}
+              ${inv.notes ? `<div style="font-size:11px;color:var(--s5);margin-top:2px">Notes: ${inv.notes}</div>` : ''}
             </div>
             <div style="text-align:right">
               <div style="font-size:15px;font-weight:700;color:var(--s1)">${amt}</div>
@@ -3850,6 +3857,8 @@
             ${inv.paystack_authorization_url && normalizedStatus !== 'paid' ? `<a href="${inv.paystack_authorization_url}" target="_blank" class="btn btn-w btn-xs">View Link</a><button class="btn btn-g btn-xs" onclick="copyExternalLink('${encodeURIComponent(inv.paystack_authorization_url)}')">Copy Link</button>` : ''}
             ${normalizedStatus !== 'paid' ? `<button class="btn btn-w btn-xs" onclick="resendInvoice('${inv.id}')">Resend</button>` : ''}
             ${canRegenerate ? `<button class="btn btn-a btn-xs" onclick="regenerateInvoiceLink('${inv.id}')">Regenerate Link (12h+)</button>` : ''}
+            ${normalizedStatus !== 'paid' ? `<button class="btn btn-gr btn-xs" onclick="setInvoicePaidState('${inv.id}','paid')">Mark Paid</button>` : `<button class="btn btn-a btn-xs" onclick="setInvoicePaidState('${inv.id}','pending')">Mark Pending</button>`}
+            <button class="btn btn-w btn-xs" onclick="editInvoiceRecord('${inv.id}')">Edit</button>
             ${normalizedStatus === 'paid' ? `<span style="font-size:11px;color:var(--green)">Paid ${inv.paid_at ? new Date(inv.paid_at).toLocaleDateString() : ''}</span>` : ''}
           </div>
         </div>`;
@@ -3892,9 +3901,10 @@
 
       const sel = document.getElementById('inv-project');
       if (sel) {
-        if (!ADMIN_PROJECTS.length && PROJECTS) ADMIN_PROJECTS = PROJECTS;
-        const opts = ADMIN_PROJECTS.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+        if (!ADMIN_PROJECTS.length && PROJECTS) ADMIN_PROJECTS = sortNewest(PROJECTS);
+        const opts = sortNewest(ADMIN_PROJECTS).map(p => `<option value="${p.id}">${p.title}</option>`).join('');
         sel.innerHTML = '<option value="">- No project -</option>' + opts;
+        renderInvoiceClientContact(sel.value || null);
       }
 
       const count = document.getElementById('nav-invoices-count');
@@ -3968,6 +3978,159 @@
 
     window.markPayoutPaid = async (payoutId) => {
       await updatePayoutRequestStatus(payoutId, 'paid');
+    };
+
+    window.handleInvoiceProjectSelect = function () {
+      const projectId = document.getElementById('inv-project')?.value || null;
+      const project = ADMIN_PROJECTS.find(p => p.id === projectId);
+      if (!project) {
+        renderInvoiceClientContact(null);
+        return;
+      }
+      const emailInput = document.getElementById('inv-email');
+      const nameInput = document.getElementById('inv-name');
+      const notesInput = document.getElementById('inv-notes');
+      if (emailInput && project.clientEmail) emailInput.value = project.clientEmail;
+      if (nameInput && project.client) nameInput.value = project.client;
+      if (notesInput && !notesInput.value.trim() && project.clientPhone) {
+        notesInput.value = `Client phone: ${project.clientPhone}`;
+      }
+      renderInvoiceClientContact(projectId);
+    };
+
+    function renderInvoiceClientContact(projectId) {
+      const slot = document.getElementById('inv-client-contact');
+      if (!slot) return;
+      if (!projectId) {
+        slot.textContent = 'Client details will appear here when a project is selected.';
+        return;
+      }
+      const project = ADMIN_PROJECTS.find(p => p.id === projectId);
+      if (!project) {
+        slot.textContent = 'Unable to find selected project details.';
+        return;
+      }
+      slot.textContent = `Client: ${project.client || 'Unknown'} | Email: ${project.clientEmail || '-'} | Phone: ${project.clientPhone || '-'}`;
+    }
+
+    async function updateInvoiceFinancialTransaction(invoice, nextStatus) {
+      const sb = window.sbClient;
+      if (!sb || !invoice?.id) return;
+      const txStatus = nextStatus === 'paid' ? 'paid' : (nextStatus === 'failed' ? 'failed' : 'pending');
+      const txDescription = nextStatus === 'paid'
+        ? `Invoice paid by ${invoice.client_email || 'client'}`
+        : `Invoice status updated to ${nextStatus}`;
+      const { error: txErr } = await sb
+        .from('financial_transactions')
+        .update({
+          status: txStatus,
+          description: txDescription,
+          updated_at: new Date().toISOString()
+        })
+        .eq('invoice_id', invoice.id)
+        .eq('kind', 'invoice');
+      if (txErr && window._L) _L.warn('Unable to update linked financial transaction:', txErr);
+    }
+
+    window.setInvoicePaidState = async function (invoiceId, nextStatus = 'paid') {
+      const sb = window.sbClient;
+      if (!sb || !invoiceId) return;
+      const normalized = normalizeInvoiceStatus(nextStatus);
+      const { data: inv, error: invErr } = await sb.from('invoices').select('*').eq('id', invoiceId).maybeSingle();
+      if (invErr || !inv) {
+        toast('Invoice not found');
+        return;
+      }
+      const patch = {
+        status: normalized,
+        updated_at: new Date().toISOString(),
+      };
+      if (normalized === 'paid') patch.paid_at = new Date().toISOString();
+      if (normalized !== 'paid') patch.paid_at = null;
+      const { error } = await sb.from('invoices').update(patch).eq('id', invoiceId);
+      if (error) {
+        toast(`Failed to update invoice: ${error.message || error}`);
+        return;
+      }
+      if (normalized === 'paid' && inv.project_id) {
+        const { data: proj } = await sb.from('projects').select('id,status').eq('id', inv.project_id).maybeSingle();
+        const projectStatus = String(proj?.status || '').toLowerCase();
+        if (proj?.id && ['lead', 'pending', 'pending_deposit', 'open', 'created'].includes(projectStatus)) {
+          await sb.from('projects').update({
+            status: 'active',
+            updated_at: new Date().toISOString()
+          }).eq('id', proj.id);
+        }
+      }
+      await updateInvoiceFinancialTransaction(inv, normalized);
+      AUDIT_LOGS.unshift({
+        time: now(),
+        admin: currentAdminName,
+        action: 'invoice_status_update',
+        detail: `Invoice ${String(invoiceId).slice(0, 8)} set to ${normalized}`,
+        type: 'info'
+      });
+      toast(`Invoice marked ${normalized}`);
+      await loadAdminData();
+      await loadInvoices();
+    };
+
+    window.editInvoiceRecord = async function (invoiceId) {
+      const sb = window.sbClient;
+      if (!sb || !invoiceId) return;
+      const { data: inv, error: invErr } = await sb.from('invoices').select('*').eq('id', invoiceId).maybeSingle();
+      if (invErr || !inv) {
+        toast('Invoice not found');
+        return;
+      }
+      const nextDescription = prompt('Description / Service', inv.description || '');
+      if (nextDescription === null) return;
+      const nextAmountRaw = prompt('Amount (KES)', String(inv.amount || '0'));
+      if (nextAmountRaw === null) return;
+      const nextAmount = Number(nextAmountRaw);
+      if (!Number.isFinite(nextAmount) || nextAmount <= 0) {
+        toast('Amount must be a positive number');
+        return;
+      }
+      const nextDueDate = prompt('Due Date (YYYY-MM-DD)', inv.due_date || '');
+      if (nextDueDate === null) return;
+      const nextNotes = prompt('Invoice Notes', inv.notes || '');
+      if (nextNotes === null) return;
+      const nextEmail = prompt('Client Email', inv.client_email || '');
+      if (nextEmail === null) return;
+      const patch = {
+        description: nextDescription.trim() || 'Invoice',
+        amount: nextAmount,
+        due_date: nextDueDate.trim() || null,
+        notes: nextNotes.trim() || null,
+        client_email: nextEmail.trim(),
+        updated_at: new Date().toISOString()
+      };
+      const { error } = await sb.from('invoices').update(patch).eq('id', invoiceId);
+      if (error) {
+        toast(`Failed to update invoice: ${error.message || error}`);
+        return;
+      }
+      await sb
+        .from('financial_transactions')
+        .update({
+          amount: nextAmount,
+          description: `Invoice updated for ${nextEmail.trim()}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('invoice_id', invoiceId)
+        .eq('kind', 'invoice');
+
+      AUDIT_LOGS.unshift({
+        time: now(),
+        admin: currentAdminName,
+        action: 'invoice_edit',
+        detail: `Invoice ${String(invoiceId).slice(0, 8)} edited`,
+        type: 'info'
+      });
+      toast('Invoice updated');
+      await loadAdminData();
+      await loadInvoices();
     };
 
     window.resendInvoice = async (invoiceId) => {
@@ -4060,12 +4223,29 @@
       return `<div class="uav" style="background:#1A1A1A;width:${size}px;height:${size}px;"><img src="https://api.dicebear.com/8.x/thumbs/svg?seed=${u.seed}&backgroundColor=1A1A1A" onerror="this.style.display='none'">${u.initials}</div>`;
     }
     function fmt(n) { return 'KSh ' + Number(n).toLocaleString(); }
+    function parseTs(v) {
+      const n = Number(v);
+      if (Number.isFinite(n) && n > 0) return n;
+      const ts = Date.parse(String(v || ''));
+      return Number.isFinite(ts) ? ts : 0;
+    }
+    function sortNewest(list) {
+      return [...(Array.isArray(list) ? list : [])].sort((a, b) => {
+        const aTs = parseTs(a?.createdAtMs || a?.createdAt || a?.created_at || a?.date || a?.time);
+        const bTs = parseTs(b?.createdAtMs || b?.createdAt || b?.created_at || b?.date || b?.time);
+        return bTs - aTs;
+      });
+    }
 
     //  Render Dashboard 
     function renderDashboard() {
+      const usersNewest = sortNewest(USERS);
+      const projectsNewest = sortNewest(PROJECTS);
+      const txNewest = sortNewest(TRANSACTIONS);
+
       // Recent users
       const tbody = document.getElementById('dash-users-body');
-      tbody.innerHTML = USERS.length ? USERS.slice(0, 5).map(u => `
+      tbody.innerHTML = usersNewest.length ? usersNewest.slice(0, 5).map(u => `
     <tr onclick="openUserAction('${u.id}')">
       <td><div class="uc">${userAv(u)} <div><div style="font-weight:600;color:var(--w)">${u.name}</div><div style="font-size:10px;color:var(--s5)">${u.email}</div></div></div></td>
       <td>${roleBadge(u.role)}</td>
@@ -4080,7 +4260,7 @@
         : '<div style="padding:14px;text-align:center;color:var(--s5);font-size:12px;">No recent platform activity.</div>';
 
       // Dashboard projects (top 4)
-      document.getElementById('dash-projects-body').innerHTML = PROJECTS.length ? PROJECTS.slice(0, 4).map(p => `
+      document.getElementById('dash-projects-body').innerHTML = projectsNewest.length ? projectsNewest.slice(0, 4).map(p => `
     <tr onclick="openProjectDrill('${p.id}')">
       <td><div style="font-weight:600;color:var(--w)">${p.title}</div><div style="font-size:10px;color:var(--s5)">${p.type}</div></td>
       <td><div class="uc"><div class="uav" style="background:#1A1A1A">${p.clientId ? USERS.find(u => u.id === p.clientId)?.initials : '?'}</div>${p.client}</div></td>
@@ -4094,19 +4274,20 @@
       renderDisputeCards('dash-disputes-list', 3);
 
       // Dashboard ledger (top 5)
-      document.getElementById('dash-ledger-body').innerHTML = TRANSACTIONS.length
-        ? TRANSACTIONS.slice(0, 5).map(t => ledgerRow(t)).join('')
+      document.getElementById('dash-ledger-body').innerHTML = txNewest.length
+        ? txNewest.slice(0, 5).map(t => ledgerRow(t)).join('')
         : '<tr><td colspan="7" style="text-align:center;color:var(--s5);padding:16px;">No transactions yet.</td></tr>';
     }
 
     function renderSupportInbox() {
       const host = document.getElementById('dash-support-inbox');
       if (!host) return;
-      if (!SUPPORT_INBOX.length) {
+      const inboxNewest = sortNewest(SUPPORT_INBOX);
+      if (!inboxNewest.length) {
         host.innerHTML = '<div style="padding:12px;text-align:center;color:var(--s5);font-size:12px;">No support conversations yet.</div>';
         return;
       }
-      host.innerHTML = SUPPORT_INBOX.slice(0, 10).map(item => {
+      host.innerHTML = inboxNewest.slice(0, 10).map(item => {
         const safeName = String(item.sender_name || 'Client').replace(/'/g, '');
         return `
           <div style="border:1px solid var(--bd1);border-radius:10px;padding:10px;background:var(--b3);">
@@ -4163,7 +4344,7 @@
       const q = document.getElementById('users-search').value.toLowerCase();
       const rf = document.getElementById('users-role-filter').value;
       const sf = document.getElementById('users-status-filter').value;
-      let filtered = USERS.filter(u =>
+      let filtered = sortNewest(USERS).filter(u =>
         (!q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || u.role.includes(q)) &&
         (!rf || u.role === rf) &&
         (!sf || u.status === sf)
@@ -4190,7 +4371,7 @@
     function renderProjects() {
       const q = document.getElementById('projects-search').value.toLowerCase();
       const sf = document.getElementById('projects-status-filter').value;
-      let filtered = PROJECTS.filter(p =>
+      let filtered = sortNewest(PROJECTS).filter(p =>
         (!q || p.title.toLowerCase().includes(q) || p.client.toLowerCase().includes(q) || p.dev.toLowerCase().includes(q)) &&
         (!sf || p.status === sf)
       );
@@ -4216,7 +4397,8 @@
     //  Render Vault 
     function renderVault() {
       const frozen = new Set(['p3', 'p5']);
-      document.getElementById('vault-tbody').innerHTML = PROJECTS.length ? PROJECTS.map(p => {
+      const projectsNewest = sortNewest(PROJECTS);
+      document.getElementById('vault-tbody').innerHTML = projectsNewest.length ? projectsNewest.map(p => {
         const paid = p.milestones.filter(m => m.status === 'paid').reduce((a, m) => a + m.amount, 0);
         const held = p.value - paid;
         const isFrozen = frozen.has(p.id);
@@ -4244,7 +4426,7 @@
     //  Render Disputes 
     function renderDisputeCards(containerId, limit = 99) {
       const container = document.getElementById(containerId);
-      const open = DISPUTES.filter(d => d.status === 'open').slice(0, limit);
+      const open = sortNewest(DISPUTES).filter(d => d.status === 'open').slice(0, limit);
       if (!open.length) { container.innerHTML = '<div class="empty">No open disputes</div>'; return; }
       container.innerHTML = open.map(d => `
     <div class="dp-card ${d.priority === 'high' ? 'dp-high' : ''}">
@@ -4269,7 +4451,7 @@
       const tf = document.getElementById('ledger-type-filter').value;
       const df = document.getElementById('ledger-date-from').value;
       const dt = document.getElementById('ledger-date-to').value;
-      let filtered = TRANSACTIONS.filter(t =>
+      let filtered = sortNewest(TRANSACTIONS).filter(t =>
         (!q || t.id.toLowerCase().includes(q) || t.from.toLowerCase().includes(q) || t.to.toLowerCase().includes(q) || t.project.toLowerCase().includes(q)) &&
         (!tf || t.type === tf) &&
         (!df || t.date >= df) &&
@@ -4301,7 +4483,7 @@
     function renderAudit() {
       const q = document.getElementById('audit-search').value.toLowerCase();
       const tf = document.getElementById('audit-type-filter').value;
-      let filtered = AUDIT_LOGS.filter(a =>
+      let filtered = sortNewest(AUDIT_LOGS).filter(a =>
         (!q || a.detail.toLowerCase().includes(q) || a.action.includes(q)) &&
         (!tf || a.action === tf)
       );
@@ -5181,7 +5363,8 @@
         // 1. Fetch profiles for USERS
         const { data: profiles, error: profErr } = await sb
           .from('profiles')
-          .select('*');
+          .select('*')
+          .order('created_at', { ascending: false });
 
         if (!profErr && profiles && profiles.length > 0) {
           if (window._L) _L.debug(`Fetched ${profiles.length} profiles.`);
@@ -5189,12 +5372,15 @@
             id: p.id,
             name: `${p.first_name || ''} ${p.last_name || ''}`.trim() || (p.email || 'User').split('@')[0],
             email: p.email || 'unknown-email',
+            phone: p.phone || p.phone_number || '',
             role: p.role || 'client',
             projects: 0,
             joined: new Date(p.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
             status: p.status || 'active',
             seed: p.first_name || 'User',
-            initials: ((p.first_name?.[0] || '') + (p.last_name?.[0] || '')).toUpperCase() || 'U'
+            initials: ((p.first_name?.[0] || '') + (p.last_name?.[0] || '')).toUpperCase() || 'U',
+            createdAt: p.created_at || null,
+            createdAtMs: p.created_at ? new Date(p.created_at).getTime() : 0
           }));
 
           const myProfile = profiles.find(p => p.id === user.id);
@@ -5234,7 +5420,8 @@
             developer:profiles!projects_developer_id_fkey(first_name, last_name, email),
             commissioner:profiles!projects_commissioner_id_fkey(first_name, last_name, email),
             milestones(*)
-          `);
+          `)
+          .order('created_at', { ascending: false });
 
         if (!projErr && projs && projs.length > 0) {
           if (window._L) _L.debug(`Fetched ${projs.length} projects.`);
@@ -5260,6 +5447,8 @@
               type: p.description?.slice(0, 30) || 'Project',
               client: clientName,
               clientId: p.client_id,
+              clientEmail: p.client?.email || USERS.find(u => u.id === p.client_id)?.email || '',
+              clientPhone: USERS.find(u => u.id === p.client_id)?.phone || '',
               dev: devName,
               devId: p.developer_id,
               sales: salesName || 'Platform',
@@ -5267,6 +5456,8 @@
               value: p.total_value || 0,
               progress: progress,
               status: p.status || 'active',
+              createdAt: p.created_at || null,
+              createdAtMs: p.created_at ? new Date(p.created_at).getTime() : 0,
               milestones: ms.sort((a, b) => new Date(a.due_date) - new Date(b.due_date)).map(m => ({
                 id: m.id,
                 name: m.title || 'Milestone',
@@ -5276,6 +5467,8 @@
               }))
             };
           });
+          PROJECTS = sortNewest(PROJECTS);
+          ADMIN_PROJECTS = sortNewest(PROJECTS);
         } else if (projErr) {
           if (window._L) _L.error("Error fetching projects:", projErr);
         }
@@ -5305,7 +5498,9 @@
               project: t.project?.title || '',
               amount: Number(t.amount || 0),
               date: t.created_at ? new Date(t.created_at).toISOString().slice(0, 10) : '',
-              status: t.status || 'pending'
+              status: t.status || 'pending',
+              createdAt: t.created_at || null,
+              createdAtMs: t.created_at ? new Date(t.created_at).getTime() : 0
             };
           });
         } else if (isMissingTable(ftxErr, 'financial_transactions')) {
@@ -5330,7 +5525,9 @@
                 project: t.project?.title || '',
                 amount: Number(t.amount || 0),
                 date: t.created_at ? new Date(t.created_at).toISOString().slice(0, 10) : '',
-                status: t.status || 'pending'
+                status: t.status || 'pending',
+                createdAt: t.created_at || null,
+                createdAtMs: t.created_at ? new Date(t.created_at).getTime() : 0
               };
             });
           } else if (legacyErr && window._L) {
@@ -5341,6 +5538,7 @@
         }
 
         TRANSACTIONS = Array.isArray(txRows) ? txRows : [];
+        TRANSACTIONS = sortNewest(TRANSACTIONS);
         LIVE_FEED = TRANSACTIONS.slice(0, 8).map(t => ({
           dot: t.status === 'paid' ? 'ld-g' : (t.status === 'failed' ? 'ld-r' : 'ld-a'),
           text: `${t.type} | ${t.from} -> ${t.to} | ${fmt(t.amount)}`,
@@ -5377,7 +5575,9 @@
               reason: d.reason || 'Dispute raised',
               raised: raisedAt ? raisedAt.toLocaleDateString() : 'Unknown',
               priority,
-              status: d.status || 'open'
+              status: d.status || 'open',
+              createdAt: d.created_at || null,
+              createdAtMs: d.created_at ? new Date(d.created_at).getTime() : 0
             };
           });
         } else if (isMissingTable(disputesErr, 'disputes')) {
@@ -5404,7 +5604,9 @@
               reason: d.reason,
               raised: 'Active',
               priority: d.status === 'open' ? 'high' : 'medium',
-              status: d.status
+              status: d.status,
+              createdAt: null,
+              createdAtMs: 0
             };
           });
         } else if (disputesErr) {
@@ -5431,16 +5633,18 @@
               const senderName = row.sender
                 ? `${row.sender.first_name || ''} ${row.sender.last_name || ''}`.trim() || row.sender.email || 'Client'
                 : 'Client';
-              return {
-                id: row.id,
-                sender_id: row.sender_id,
-                sender_name: senderName,
-                sender_email: row.sender?.email || '',
-                preview: String(row.content || '').replace(/\[support\]|\[admin support\]/ig, '').trim().slice(0, 220) || 'Support message',
-                is_read: !!row.is_read,
-                created_at: row.created_at ? new Date(row.created_at).toLocaleString() : 'recent'
-              };
-            });
+            return {
+              id: row.id,
+              sender_id: row.sender_id,
+              sender_name: senderName,
+              sender_email: row.sender?.email || '',
+              preview: String(row.content || '').replace(/\[support\]|\[admin support\]/ig, '').trim().slice(0, 220) || 'Support message',
+              is_read: !!row.is_read,
+              created_at: row.created_at ? new Date(row.created_at).toLocaleString() : 'recent',
+              createdAt: row.created_at || null,
+              createdAtMs: row.created_at ? new Date(row.created_at).getTime() : 0
+            };
+          });
         } else {
           if (supportErr && window._L) _L.warn('Error fetching support inbox:', supportErr);
           SUPPORT_INBOX = [];
@@ -5461,7 +5665,9 @@
               admin: actorName,
               action: a.action || 'activity',
               detail: `${a.action || 'activity'} on ${a.target_table || 'table'} ${a.target_id || ''}`.trim(),
-              type: 'info'
+              type: 'info',
+              createdAt: a.created_at || null,
+              createdAtMs: a.created_at ? new Date(a.created_at).getTime() : 0
             };
           });
         } else if (isMissingTable(auditErr, 'audit_logs')) {
