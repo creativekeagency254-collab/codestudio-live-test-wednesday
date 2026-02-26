@@ -221,6 +221,7 @@
       transform-style: preserve-3d;
       overflow: hidden;
       margin-top: 2px;
+      margin-left: 6px;
       width: 17ch;
       text-align: left;
     }
@@ -236,7 +237,7 @@
       transform-origin: center center -10px;
       backface-visibility: hidden;
       opacity: 0;
-      animation: brandCubePause 12.5s infinite;
+      animation: brandCubePause 20s infinite;
     }
 
     .brand-roll span:nth-child(1) {
@@ -257,6 +258,18 @@
 
     .brand-roll span:nth-child(5) {
       animation-delay: 10s;
+    }
+
+    .brand-roll span:nth-child(6) {
+      animation-delay: 12.5s;
+    }
+
+    .brand-roll span:nth-child(7) {
+      animation-delay: 15s;
+    }
+
+    .brand-roll span:nth-child(8) {
+      animation-delay: 17.5s;
     }
 
     @keyframes brandTypingLoop {
@@ -2845,6 +2858,9 @@
           <span>CRM</span>
           <span>ERP</span>
           <span>Customs</span>
+          <span>MPESA</span>
+          <span>API</span>
+          <span>Portfolios</span>
         </span>
       </div>
     </div>
@@ -6050,6 +6066,10 @@
       setDbStatus('connecting', 'Connecting to Supabase...');
       if (typeof window.showPage === 'function') window.showPage('dashboard');
       initSupabase();
+      setTimeout(() => {
+        setClientDashboardLoadingState(false);
+        ensureClientDashboardSectionsVisible();
+      }, 4500);
       const savedTheme = localStorage.getItem('theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
       const savedSurface = normalizeSurfaceTheme(localStorage.getItem('surfaceTheme') || 'glass');
