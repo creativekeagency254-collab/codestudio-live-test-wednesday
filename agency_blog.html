@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CODESTUDIO.KENYA Blog | Agency Delivery, Security, Payments and Growth</title>
-  <meta name="description" content="Long-form agency knowledge base for Kenya and East Africa software buyers: delivery systems, secure payments, role-based dashboards, onboarding, and practical growth playbooks." />
+  <meta name="description" content="Long-form agency knowledge base for software buyers: delivery systems, secure payments, role-based dashboards, onboarding, and practical growth playbooks." />
   <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1" />
   <meta property="og:title" content="CODESTUDIO.KENYA Blog | Agency Growth and Delivery Library" />
   <meta property="og:description" content="200 deep-dive guides focused on software delivery, client conversion, secure payments, and scalable operations." />
@@ -120,7 +120,7 @@
       margin: 0 auto;
       padding: 18px;
       display: grid;
-      grid-template-columns: 320px minmax(0, 1fr);
+      grid-template-columns: 360px minmax(0, 1fr);
       gap: 16px;
       align-items: start;
     }
@@ -418,9 +418,9 @@
   </header>
 
   <main class="layout">
-    <aside class="sidebar" aria-label="Topic navigation">
+    <aside class="sidebar" aria-label="Blog library navigation">
       <div class="sidebar-head">
-        <h2 class="sidebar-title">200 Topic Knowledge Panel</h2>
+        <h2 class="sidebar-title">Blog Library</h2>
         <p class="sidebar-sub">Select a topic to load a complete long-form article focused on conversion, delivery, trust, and secure payment operations.</p>
         <div class="sidebar-tools">
           <input id="topic-search" class="search" type="search" placeholder="Search topic, role, workflow..." />
@@ -484,8 +484,6 @@
       'Conversion-First Content Strategy'
     ];
 
-    const cities = ['Nairobi', 'Mombasa', 'Kisumu', 'Nakuru', 'Eldoret', 'Thika', 'Machakos', 'Meru', 'Nyeri', 'Kakamega'];
-
     const topics = [];
     let idx = 0;
     for (const service of serviceTracks) {
@@ -497,8 +495,7 @@
           title,
           slug: `topic-${idx}`,
           service,
-          angle,
-          city: cities[(idx - 1) % cities.length]
+          angle
         });
       }
     }
@@ -548,7 +545,7 @@
     }
 
     function buildArticle(topic) {
-      const p1 = `This guide explains ${topic.title.toLowerCase()} for software buyers and decision makers in ${topic.city} and wider East Africa. The practical objective is straightforward: move from uncertainty to a controlled delivery plan where scope, budget, timelines, and payment checkpoints are transparent from day one. A professional agency should not force clients to guess quality. Instead, it should prove process maturity through structured onboarding, role clarity, and measurable delivery outcomes.`;
+      const p1 = `This guide explains ${topic.title.toLowerCase()} for software buyers and decision makers. The practical objective is straightforward: move from uncertainty to a controlled delivery plan where scope, budget, timelines, and payment checkpoints are transparent from day one. A professional agency should not force clients to guess quality. Instead, it should prove process maturity through structured onboarding, role clarity, and measurable delivery outcomes.`;
       const p2 = `From a business standpoint, ${topic.service.toLowerCase()} matters because most projects fail when communication and accountability are vague. Teams often jump into development without clear acceptance criteria, causing cost expansion and timeline stress. The better approach is to define milestones, assign ownership per role, and maintain a single source of truth in the dashboard. Every update should be visible, timestamped, and linked to a project decision so stakeholders can track progress with confidence.`;
       const p3 = `Implementation should start with a discovery framework that captures requirements, constraints, risk tolerance, and expected commercial impact. For CODESTUDIO.KENYA-style engagements, this means documenting user stories, required integrations, payment behavior, and reporting needs before major build work begins. It also means validating technical assumptions early. If architecture decisions are postponed, teams end up rewriting flows under pressure. A disciplined blueprint prevents rework and protects both client capital and delivery quality.`;
       const p4 = `Security is not a checklist after launch. It is part of daily engineering behavior. Role-based access controls, row-level permissions, audit trails, webhook signature verification, and immutable transaction records should be active from the first sprint. This is especially critical when projects include invoice links, deposit workflows, and payout requests. Buyers should request concrete evidence: policy definitions, failure alerts, reconciliation logs, and rollback strategy. Mature agencies can show this without hesitation.`;
@@ -584,7 +581,7 @@
       ];
 
       return {
-        summary: `Practical agency guide: ${topic.title}. Focused on conversion, secure delivery, and reliable payment operations for Kenyan and East African clients.`,
+        summary: `Practical agency guide: ${topic.title}. Focused on conversion, secure delivery, and reliable payment operations for serious software clients.`,
         sections,
         checklist,
         wordCount
@@ -622,7 +619,7 @@
           const activeClass = topic.id === activeTopicId ? 'active' : '';
           return `<button class="topic-item ${activeClass}" data-topic-id="${topic.id}">
             <span>${topic.id}. ${escapeHtml(topic.angle)}</span>
-            <span class="topic-meta">${escapeHtml(topic.city)} | ${escapeHtml(topic.slug)}</span>
+            <span class="topic-meta">${escapeHtml(topic.slug)}</span>
           </button>`;
         }).join('');
 
@@ -639,7 +636,7 @@
       const article = buildArticle(topic);
 
       titleEl.textContent = topic.title;
-      metaEl.innerHTML = `<span>Topic #${topic.id}</span><span>${topic.city}, Kenya</span><span>${formatWords(article.wordCount)} words</span><span>SEO + LLM structured</span>`;
+      metaEl.innerHTML = `<span>Topic #${topic.id}</span><span>${formatWords(article.wordCount)} words</span><span>SEO + LLM structured</span>`;
       imageEl.src = buildTopicImage(topic);
       summaryEl.textContent = article.summary;
       sectionsEl.innerHTML = article.sections.map((section) => `
@@ -672,8 +669,7 @@
       visibleTopics = topics.filter((topic) =>
         topic.title.toLowerCase().includes(query) ||
         topic.service.toLowerCase().includes(query) ||
-        topic.angle.toLowerCase().includes(query) ||
-        topic.city.toLowerCase().includes(query)
+        topic.angle.toLowerCase().includes(query)
       );
       renderTopicList();
     });
@@ -683,7 +679,7 @@
         const article = buildArticle(topic);
         const blocks = article.sections.map((section) => `${section.heading}\n${section.text}`).join('\n\n');
         const checklist = article.checklist.map((item) => `- ${item}`).join('\n');
-        return `${topic.id}. ${topic.title}\nLocation Focus: ${topic.city}, Kenya\nWord Count: ${article.wordCount}\n\nSummary:\n${article.summary}\n\n${blocks}\n\nChecklist:\n${checklist}`;
+        return `${topic.id}. ${topic.title}\nWord Count: ${article.wordCount}\n\nSummary:\n${article.summary}\n\n${blocks}\n\nChecklist:\n${checklist}`;
       }).join('\n\n============================================================\n\n');
 
       try {
