@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light" data-surface="glass" data-cardfx="glass-reflection">
+<html lang="en" data-theme="light" data-surface="glass">
 
 <head>
   <meta charset="UTF-8">
@@ -754,34 +754,31 @@
       opacity: .32;
     }
 
-    html[data-surface="metal"] .card,
-    html[data-surface="metal"] .sc,
-    html[data-surface="metal"] .modal-card {
+    html[data-surface="grid"] .card,
+    html[data-surface="grid"] .sc,
+    html[data-surface="grid"] .modal-card {
       position: relative;
       overflow: hidden;
       background:
-        linear-gradient(145deg,
-          rgba(7, 10, 16, .95) 0%,
-          rgba(20, 27, 39, .92) 48%,
-          rgba(10, 14, 20, .97) 100%);
-      border-color: rgba(173, 185, 204, .26);
+        linear-gradient(var(--border-0) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-0) 1px, transparent 1px),
+        color-mix(in srgb, var(--bg-card) 94%, transparent 6%);
+      background-size: 18px 18px, 18px 18px, auto;
+      border-color: color-mix(in srgb, var(--border-2) 92%, rgba(255, 255, 255, .08) 8%);
       box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, .12),
-        inset 0 -14px 24px rgba(0, 0, 0, .4),
-        0 18px 30px rgba(0, 0, 0, .38);
+        inset 0 1px 0 rgba(255, 255, 255, .05),
+        0 10px 18px rgba(0, 0, 0, .20);
     }
 
-    html[data-surface="metal"] .card::after,
-    html[data-surface="metal"] .sc::after,
-    html[data-surface="metal"] .modal-card::after {
+    html[data-surface="grid"] .card::after,
+    html[data-surface="grid"] .sc::after,
+    html[data-surface="grid"] .modal-card::after {
       content: '';
       position: absolute;
       inset: 0;
       pointer-events: none;
-      background:
-        linear-gradient(112deg, rgba(255, 255, 255, .10) 0%, transparent 28%, transparent 72%, rgba(255, 255, 255, .08) 100%),
-        radial-gradient(160% 90% at 50% 0%, rgba(255, 255, 255, .08), transparent 42%);
-      opacity: .48;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .04), transparent 55%);
+      opacity: .32;
     }
 
     .so-btn {
@@ -2366,23 +2363,7 @@
         <div class="surface-pill-lbl">Premium Surface</div>
         <div class="surface-row">
           <button class="surface-opt" id="surface-opt-glass" onclick="setSurfaceTheme('glass')">Glass Reflection</button>
-          <button class="surface-opt" id="surface-opt-metal" onclick="setSurfaceTheme('metal')">Metallic Noir</button>
         </div>
-      </div>
-      <div class="cardfx-pill">
-        <div class="cardfx-label">Card Background Style</div>
-        <select id="cardfx-select" class="cardfx-select" onchange="setCardFxTheme(this.value)">
-          <option value="gradient-flow">1. Animated Gradient Flow</option>
-          <option value="glass-reflection">2. Glassmorphism Reflection</option>
-          <option value="floating-blobs">3. Floating Abstract Blobs</option>
-          <option value="particle-network">4. Particle Network</option>
-          <option value="moving-grid">5. Subtle Moving Grid</option>
-          <option value="animated-waves">6. Animated Waves</option>
-          <option value="parallax-layers">7. Parallax Layers</option>
-          <option value="glow-pulse">8. Glow Pulse</option>
-          <option value="diagonal-sweep">9. Diagonal Light Sweep</option>
-          <option value="noise-grain">10. Noise Grain</option>
-        </select>
       </div>
       <!-- Theme toggle -->
       <div class="theme-pill" onclick="toggleTheme()"><span class="theme-pill-lbl" id="theme-lbl">Dark
@@ -4634,12 +4615,18 @@
     }
 
     // Theme toggle
+    function normalizeSurfaceTheme(theme) {
+      const raw = String(theme || '').toLowerCase();
+      if (raw === 'grid' || raw === 'metal') return 'grid';
+      return 'glass';
+    }
+
     function syncSurfaceThemeUI(theme) {
-      const normalized = theme === 'metal' ? 'metal' : 'glass';
+      const normalized = normalizeSurfaceTheme(theme);
       const glassBtn = document.getElementById('surface-opt-glass');
       const metalBtn = document.getElementById('surface-opt-metal');
       if (glassBtn) glassBtn.classList.toggle('active', normalized === 'glass');
-      if (metalBtn) metalBtn.classList.toggle('active', normalized === 'metal');
+      if (metalBtn) metalBtn.classList.toggle('active', normalized === 'grid');
     }
 
     function normalizeCardFxTheme(theme) {
@@ -4671,7 +4658,7 @@
     };
 
     window.setSurfaceTheme = function (theme) {
-      const normalized = theme === 'metal' ? 'metal' : 'glass';
+      const normalized = normalizeSurfaceTheme(theme);
       document.documentElement.setAttribute('data-surface', normalized);
       localStorage.setItem('surfaceTheme', normalized);
       syncSurfaceThemeUI(normalized);
@@ -4865,12 +4852,10 @@
       initSupabase();
       const savedTheme = localStorage.getItem('theme') || 'light';
       document.documentElement.setAttribute('data-theme', savedTheme);
-      const savedSurface = localStorage.getItem('surfaceTheme') || 'glass';
+      const savedSurface = normalizeSurfaceTheme(localStorage.getItem('surfaceTheme') || 'glass');
       document.documentElement.setAttribute('data-surface', savedSurface);
       syncSurfaceThemeUI(savedSurface);
-      const savedCardFx = normalizeCardFxTheme(localStorage.getItem('clientCardFxTheme') || 'glass-reflection');
-      document.documentElement.setAttribute('data-cardfx', savedCardFx);
-      syncCardFxUI(savedCardFx);
+      localStorage.removeItem('clientCardFxTheme');
       const sw = document.getElementById('theme-sw');
       const lbl = document.getElementById('theme-lbl');
       if (sw) sw.classList.toggle('on', savedTheme === 'light');
