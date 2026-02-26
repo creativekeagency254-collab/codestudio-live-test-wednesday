@@ -3356,16 +3356,29 @@
     //  Edge Function Helpers 
     const EDGE_BASE = window.SUPABASE_FUNCTIONS_BASE
       || `${String(window.SUPABASE_URL || 'https://smdbfaomeghoejqqkplv.supabase.co').replace(/\/$/, '')}/functions/v1`;
-    const SUPABASE_ANON = window.SUPABASE_ANON_KEY
-      || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNtZGJmYW9tZWdob2VqcXFrcGx2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE1OTY4MDEsImV4cCI6MjA4NzE3MjgwMX0.HuQdEt6Knr7_MgYt2B_QiUbls2hy8SMPZlSxe5KPTqU';
+    const SUPABASE_ANON = String(window.SUPABASE_ANON_KEY || '').trim();
 
-    async function callEdgeFunction(fn, payload, userToken) {
+    async function callEdgeFunction(fn, payload, userToken, retry401 = true) {
       try {
+        const bearer = String(userToken || SUPABASE_ANON || '').trim();
+        if (!bearer) {
+          return { error: 'Missing auth token. Check Supabase config and sign in again.' };
+        }
         const res = await fetch(`${EDGE_BASE}/${fn}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${userToken || SUPABASE_ANON}` },
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON || bearer,
+            Authorization: `Bearer ${bearer}`
+          },
           body: JSON.stringify(payload),
         });
+        if (res.status === 401 && retry401 && window.sbClient) {
+          const refreshed = await getJwt(true);
+          if (refreshed && refreshed !== userToken) {
+            return callEdgeFunction(fn, payload, refreshed, false);
+          }
+        }
         const raw = await res.text();
         let body = {};
         if (raw) {
@@ -3382,11 +3395,21 @@
       }
     }
 
-    async function getJwt() {
+    async function getJwt(forceRefresh = false) {
       const sb = window.sbClient;
-      if (!sb) return SUPABASE_ANON;
-      const { data: { session } } = await sb.auth.getSession();
-      return session?.access_token || SUPABASE_ANON;
+      if (!sb) return null;
+      let session = null;
+      try {
+        const { data } = await sb.auth.getSession();
+        session = data?.session || null;
+      } catch (_) { }
+      if (!session?.access_token && forceRefresh) {
+        try {
+          const { data } = await sb.auth.refreshSession();
+          session = data?.session || session;
+        } catch (_) { }
+      }
+      return session?.access_token || null;
     }
 
     function getSelectedBroadcastRoles() {
