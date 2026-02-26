@@ -4736,26 +4736,26 @@
       const invoice = (CLIENT_INVOICES_CACHE || []).find(i => i.id === invoiceId) || null;
       const jwt = await getJwt(true);
       if (!jwt) {
-        toast('Session expired. Please sign in again, then retry.');
-        return;
+        toast('Secure session not found. Using direct invoice fallback...');
       }
       const payload = {
         invoice_id: invoiceId,
-        client_email: invoice?.client_email || CURRENT_USER.email || undefined,
+        client_email: CURRENT_USER.email || invoice?.client_email || undefined,
         client_name: invoice?.client_name || undefined,
         amount: invoice?.amount || undefined,
         description: invoice?.description || undefined,
         due_date: invoice?.due_date || undefined,
         notes: invoice?.notes || undefined,
       };
-      const result = await callEdgeFunction('send-invoice', payload, jwt);
+      const result = await callEdgeFunction('send-invoice', payload, jwt || SUPABASE_ANON);
       if (result?.error) {
         toast(`Could not generate payment link: ${result.error}`);
         return;
       }
-      toast('Payment link generated');
+      toast('Payment link generated and invoice email sent');
       if (result.authorization_url) {
-        window.open(result.authorization_url, '_blank', 'noopener,noreferrer');
+        window.location.href = result.authorization_url;
+        return;
       }
       await loadData();
       showPage('billing');

@@ -229,3 +229,11 @@ Full artifact paths:
      - `npx --yes supabase@2.76.15 functions deploy send-email --project-ref smdbfaomeghoejqqkplv`
      - `npx --yes supabase@2.76.15 functions deploy send-invoice --project-ref smdbfaomeghoejqqkplv`
      - `npx --yes supabase@2.76.15 functions deploy send_gmail --project-ref smdbfaomeghoejqqkplv`
+
+- `send-invoice` returns `401` while generating payment link in client dashboard:
+  1. This repo now sets `[functions.send-invoice] verify_jwt = false` in `supabase/config.toml` to avoid auth-gateway failures on hosted dashboards.
+  2. Redeploy the function so the auth setting takes effect:
+     - `npx --yes supabase@2.76.15 functions deploy send-invoice --project-ref smdbfaomeghoejqqkplv`
+  3. Re-test from client billing:
+     - Click `Generate Link` on invoice.
+     - It should redirect directly to Paystack checkout and email the invoice to the logged-in client email.

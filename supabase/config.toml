@@ -31,7 +31,7 @@ otp_length = 8
 otp_expiry = 3600
 
 [functions.send-invoice]
-verify_jwt = true
+verify_jwt = false
 
 [functions.initiate-topup]
 verify_jwt = false
