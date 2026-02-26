@@ -8232,6 +8232,7 @@
     };
     const CLIENT_ONBOARD_CTX_KEY = 'code-studio-client-onboard';
     let ONBOARD_CONTEXT = null;
+    let LANDING_REDIRECT_IN_PROGRESS = false;
 
     function isUuidLike(value) {
       return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(value || '').trim());
@@ -8345,63 +8346,74 @@
       }
     }
     async function redirectAfterAuth(authData) {
+      if (LANDING_REDIRECT_IN_PROGRESS) return;
       const user = authData?.user || authData?.session?.user;
       if (!user) {
         hideDashRedirectOverlay();
+        LANDING_REDIRECT_IN_PROGRESS = false;
         return;
       }
+      LANDING_REDIRECT_IN_PROGRESS = true;
       showDashRedirectOverlay('(check your internet)');
       if (typeof ensureWelcomeEmailForClient === 'function' && authData?.session) {
-        try {
-          await ensureWelcomeEmailForClient(authData.session);
-        } catch (e) {
-          console.warn('Welcome email trigger failed before redirect:', e);
+        Promise.resolve()
+          .then(() => ensureWelcomeEmailForClient(authData.session))
+          .catch((e) => console.warn('Welcome email trigger failed before redirect:', e));
+      }
+      try {
+        const emailKey = String(user.email || '').trim().toLowerCase();
+        if (FIXED_ROLE_ROUTES[emailKey]) {
+          window.location.href = FIXED_ROLE_ROUTES[emailKey];
+          return;
         }
-      }
-      const emailKey = String(user.email || '').trim().toLowerCase();
-      if (FIXED_ROLE_ROUTES[emailKey]) {
-        window.location.href = FIXED_ROLE_ROUTES[emailKey];
-        return;
-      }
 
-      if (typeof getDashboardForRole === 'function') {
-        const target = await getDashboardForRole({ user });
-        window.location.href = target;
-        return;
-      }
+        if (typeof getDashboardForRole === 'function') {
+          const target = await getDashboardForRole({ user }, { fastRoleLookup: true });
+          window.location.href = target;
+          return;
+        }
 
-      const routes = {
-        client: appRoute(DASHBOARD_PATH_BY_ROLE.client),
-        developer: appRoute(DASHBOARD_PATH_BY_ROLE.developer),
-        commissioner: appRoute(DASHBOARD_PATH_BY_ROLE.commissioner),
-        admin: appRoute(DASHBOARD_PATH_BY_ROLE.admin)
-      };
-      const { data: profile } = await window.sbClient
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .maybeSingle();
-      let roleFromDb = profile?.role || null;
-      if (!roleFromDb) {
-        const { data: userRole } = await window.sbClient
-          .from('users')
+        const routes = {
+          client: appRoute(DASHBOARD_PATH_BY_ROLE.client),
+          developer: appRoute(DASHBOARD_PATH_BY_ROLE.developer),
+          commissioner: appRoute(DASHBOARD_PATH_BY_ROLE.commissioner),
+          admin: appRoute(DASHBOARD_PATH_BY_ROLE.admin)
+        };
+        const { data: profile } = await window.sbClient
+          .from('profiles')
           .select('role')
           .eq('id', user.id)
           .maybeSingle();
-        roleFromDb = userRole?.role || null;
+        let roleFromDb = profile?.role || null;
+        if (!roleFromDb) {
+          const { data: userRole } = await window.sbClient
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle();
+          roleFromDb = userRole?.role || null;
+        }
+        const normalizeLandingRole = (value) => {
+          const raw = String(value || '').trim().toLowerCase();
+          return LANDING_ROLE_ALIASES[raw] || raw;
+        };
+        const metaRole = user?.user_metadata?.role || user?.app_metadata?.role || user?.app_metadata?.user_role;
+        const resolvedRole = normalizeLandingRole(roleFromDb || metaRole || 'client');
+        window.location.href = routes[resolvedRole] || routes.client;
+      } catch (routeErr) {
+        console.error('Dashboard redirect failed:', routeErr);
+        hideDashRedirectOverlay();
+        LANDING_REDIRECT_IN_PROGRESS = false;
+        const submitBtn = document.getElementById('auth-submit');
+        if (submitBtn) submitBtn.disabled = false;
+        showToast('Could not redirect to dashboard. Please retry.');
       }
-      const normalizeLandingRole = (value) => {
-        const raw = String(value || '').trim().toLowerCase();
-        return LANDING_ROLE_ALIASES[raw] || raw;
-      };
-      const metaRole = user?.user_metadata?.role || user?.app_metadata?.role || user?.app_metadata?.user_role;
-      const resolvedRole = normalizeLandingRole(roleFromDb || metaRole || 'client');
-      window.location.href = routes[resolvedRole] || routes.client;
     }
     async function submitAuth() {
       const isLogin = document.getElementById('tab-login').classList.contains('active');
       const btn = document.getElementById('auth-submit');
       btn.disabled = true;
+      LANDING_REDIRECT_IN_PROGRESS = false;
 
       if (isLogin) {
         const email = document.getElementById('f-email').value.trim();

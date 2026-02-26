@@ -3779,6 +3779,9 @@
         applyClientAvatar(oauthAvatarUrl);
       }
       renderSalesAssignmentNote();
+      // Drop the full-screen preload as soon as profile/session is ready.
+      setClientDashboardLoadingState(false);
+      if (window.hideLoader) hideLoader();
 
       try {
         await loadData();
@@ -3801,7 +3804,6 @@
       }
       const sb = window.getDbClient ? window.getDbClient() : window.sbClient;
       if (window._L) _L.info("Loading client dashboard data...");
-      setClientDashboardLoadingState(true, 'Loading dashboard data... (check your internet)');
 
       // 1. Fetch User's Projects (with non-breaking fallbacks for relation/schema drift)
       let projects = [];

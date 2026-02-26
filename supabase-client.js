@@ -460,18 +460,21 @@ async function getDashboardForRole(session, options = {}) {
   const unresolvedFallback = Object.prototype.hasOwnProperty.call(options, 'unresolvedFallback')
     ? options.unresolvedFallback
     : appUrl('client_dashboard.html');
+  const fastRoleLookup = Boolean(options.fastRoleLookup);
   if (!window.sbClient || !session?.user) return unresolvedFallback;
 
   let profile = null;
-  try {
-    profile = await ensureUserProfile(session);
-  } catch (e) {
-    _L.debug('ensureUserProfile failed while resolving dashboard role.', e);
+  if (!fastRoleLookup) {
+    try {
+      profile = await ensureUserProfile(session);
+    } catch (e) {
+      _L.debug('ensureUserProfile failed while resolving dashboard role.', e);
+    }
   }
   const profileRole = profile?.role;
   const metaRole = resolveRoleFromUser(session.user);
   const forcedRole = forcedRoleFromEmail(session.user?.email);
-  const dbRole = await resolveRoleFromDatabase(session);
+  const dbRole = forcedRole ? null : await resolveRoleFromDatabase(session);
   const role = forcedRole || normalizeRole(profileRole) || dbRole || normalizeRole(metaRole);
   if (!role) return unresolvedFallback;
   return dashboardForRole(role);
@@ -535,7 +538,10 @@ document.addEventListener('DOMContentLoaded', () => sanitizeMojibake(document.bo
 async function handleAuthRedirect(session) {
   if (session && session.user) {
     _L.info('User session detected, checking dashboard for role...', { email: session.user.email });
-    const dashboard = await getDashboardForRole(session, { unresolvedFallback: appUrl('client_dashboard.html') });
+    const dashboard = await getDashboardForRole(session, {
+      unresolvedFallback: appUrl('client_dashboard.html'),
+      fastRoleLookup: true
+    });
     const currentPage = currentPageName();
     const targetPage = pageNameFromUrlish(dashboard);
 
@@ -583,12 +589,10 @@ async function redirectIfLoggedIn() {
   if (!window.sbClient) return;
   const { data: { session }, error } = await window.sbClient.auth.getSession();
   if (session) {
-    try {
-      await ensureWelcomeEmailForClient(session);
-    } catch (e) {
-      _L.debug('Welcome email check during redirectIfLoggedIn failed.', e);
-    }
-    handleAuthRedirect(session);
+    Promise.resolve()
+      .then(() => ensureWelcomeEmailForClient(session))
+      .catch((e) => _L.debug('Welcome email check during redirectIfLoggedIn failed.', e));
+    await handleAuthRedirect(session);
   }
 }
 
@@ -639,17 +643,10 @@ if (window.sbClient && !window.__SC_AUTH_LISTENER_ATTACHED) {
 
     if (event === 'SIGNED_IN' || event === 'USER_UPDATED' || event === 'INITIAL_SESSION') {
       if (session?.user) {
-        let profile = null;
-        try {
-          profile = await ensureUserProfile(session);
-        } catch (syncErr) {
-          _L.debug('ensureUserProfile during auth event failed.', syncErr);
-        }
-        try {
-          await ensureWelcomeEmailForClient(session, profile);
-        } catch (welcomeErr) {
-          _L.debug('ensureWelcomeEmailForClient during auth event failed.', welcomeErr);
-        }
+        Promise.resolve()
+          .then(() => ensureUserProfile(session))
+          .then((profile) => ensureWelcomeEmailForClient(session, profile))
+          .catch((syncErr) => _L.debug('auth background sync/welcome failed.', syncErr));
       }
       const currentPage = currentPageName();
       if (isLandingPage(currentPage)) {
