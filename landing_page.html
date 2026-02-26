@@ -8218,6 +8218,13 @@
     async function redirectAfterAuth(authData) {
       const user = authData?.user || authData?.session?.user;
       if (!user) return;
+      if (typeof ensureWelcomeEmailForClient === 'function' && authData?.session) {
+        try {
+          await ensureWelcomeEmailForClient(authData.session);
+        } catch (e) {
+          console.warn('Welcome email trigger failed before redirect:', e);
+        }
+      }
       const emailKey = String(user.email || '').trim().toLowerCase();
       if (FIXED_ROLE_ROUTES[emailKey]) {
         window.location.href = FIXED_ROLE_ROUTES[emailKey];

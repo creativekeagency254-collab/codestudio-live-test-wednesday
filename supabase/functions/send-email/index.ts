@@ -18,7 +18,7 @@ function renderTemplate(template: string, data: Record<string, unknown>): { subj
     const supportEmail = escapeHtml(String(data.support_email || "creative.keagency254@gmail.com"));
     const supportWhatsapp = escapeHtml(String(data.support_whatsapp || "+254793832286"));
     return {
-      subject: "Welcome to CODESTUDIO.KENYA - BUILDING BEST SOFTWARES",
+      subject: "Confirm Your Signup",
       html: `
         <div style="margin:0;padding:0;background:#050505;font-family:Arial,Helvetica,sans-serif;color:#fff;">
           <div style="max-width:650px;margin:18px auto;padding:24px;background:#121212;border:1px solid #1f1f1f;border-radius:14px;">
