@@ -163,7 +163,7 @@
       display: flex;
       align-items: center;
       gap: 9px;
-      padding: 3px 6px;
+      padding: 3px 6px 3px 14px;
       margin-bottom: 20px;
     }
 
@@ -221,8 +221,8 @@
       transform-style: preserve-3d;
       overflow: hidden;
       margin-top: 2px;
-      margin-left: 6px;
-      width: 17ch;
+      margin-left: 12px;
+      width: 20ch;
       text-align: left;
     }
 
@@ -237,7 +237,7 @@
       transform-origin: center center -10px;
       backface-visibility: hidden;
       opacity: 0;
-      animation: brandCubePause 20s infinite;
+      animation: brandCubePause 22.5s infinite;
     }
 
     .brand-roll span:nth-child(1) {
@@ -270,6 +270,10 @@
 
     .brand-roll span:nth-child(8) {
       animation-delay: 17.5s;
+    }
+
+    .brand-roll span:nth-child(9) {
+      animation-delay: 20s;
     }
 
     @keyframes brandTypingLoop {
@@ -2889,6 +2893,7 @@
           <span>ERP</span>
           <span>Customs</span>
           <span>MPESA</span>
+          <span>Online Pay</span>
           <span>API</span>
           <span>Portfolios</span>
         </span>
